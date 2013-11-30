@@ -1,0 +1,11 @@
+https://code.google.com/p/dosmildoce/source/browse/trunk/QUdpServer/Widget.cpp - UDPServer
+
+http://habrahabr.ru/post/131472/ - Простой сервер на Qt/C++
+
+http://habrahabr.ru/post/131585/ - Клиент-серверный чат, используя сокеты Qt/C++
+
+http://habrahabr.ru/post/31469/ - Matthias Ettrich
+
+отделение функционала в поток
+http://vasinnet.blogspot.ru/2012/08/recommended-way-to-using-qthread.html
+http://habrahabr.ru/post/150274/
