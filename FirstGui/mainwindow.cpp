@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     tuneUpUI->setupUi(tuneUpWidget);
 
+    m_defaultPort = 5300;
     default_connections();
 }
 
@@ -178,7 +179,7 @@ void MainWindow::connectedUdp()
     out << qint16(data.size() - sizeof(qint16));
     //udpOutSocket->writeDatagram(data, QHostAddress::LocalHost, 4300);
 
-    udpOutSocket->writeDatagram("Servers, where are you?", QHostAddress("127.0.0.1"), quint16(4300) );
+    udpOutSocket->writeDatagram("Servers, where are you?\n", QHostAddress("127.0.0.1"), quint16(m_defaultPort) );
 }
 
 void MainWindow::connectedTcp()
@@ -194,7 +195,7 @@ void MainWindow::on_applyPB_clicked()
     m_host = tuneUpUI->hostLE->text();
     bool ok = false;
     const int port = tuneUpUI->portLE->text().toInt(&ok);
-    m_port = ok ? port : 5300;
+    m_port = ok ? port : m_defaultPort;
 
     const int idx = tuneUpUI->protocolCB->currentIndex();
     //m_protocol_type = tuneUpUI->protocolCB->itemText(idx);
@@ -208,9 +209,9 @@ void MainWindow::on_applyPB_clicked()
 void MainWindow::default_connections()
 {
     m_host = QString("127.0.0.1");
-    m_port = 5300;
-    m_protocolType = TCP;
-    //m_protocolType = UDP;
+    m_port = m_defaultPort;
+    //m_protocolType = TCP;
+    m_protocolType = UDP;
     tuneUpUI->hostLE->setText(m_host);
     tuneUpUI->portLE->setText(QString::number(m_port));
     tuneUpUI->protocolCB->setCurrentIndex(0);

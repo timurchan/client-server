@@ -9,6 +9,7 @@ class TimTcpServer : public QTcpServer
 
 public:
     TimTcpServer(QObject *parent=0);
+    ~TimTcpServer();
 
 private slots:
     void readyRead();

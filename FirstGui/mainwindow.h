@@ -70,6 +70,7 @@ private:
 
     QString m_host;
     int m_port;
+    int m_defaultPort;
     //QString m_protocol_type;
     ProtocolType m_protocolType;
 

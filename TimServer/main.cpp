@@ -100,18 +100,14 @@ int main(int argc, char *argv[])
     bool success = false;
 
     if(cmdInfo.protocolType == UDP) {
-        QSharedPointer<TimUdpServer> server = QSharedPointer<TimUdpServer>(new TimUdpServer());
+        //QSharedPointer<TimUdpServer> server = QSharedPointer<TimUdpServer>(new TimUdpServer());
+        TimUdpServer* server = new TimUdpServer();
         success = server->initSocket();
 
     } else if(cmdInfo.protocolType == TCP) {
-        QSharedPointer<TimTcpServer> server = QSharedPointer<TimTcpServer>(new TimTcpServer());
-
-        QHostAddress address(cmdInfo.host);
-        if(cmdInfo.host == "@")
-        {
-            address = QHostAddress::LocalHost;
-        }
-        success = server->listen(address, cmdInfo.port);
+        //QSharedPointer<TimTcpServer> server = QSharedPointer<TimTcpServer>(new TimTcpServer());
+        TimTcpServer* server = new TimTcpServer();
+        success = server->listen(QHostAddress::Any, cmdInfo.port);
     } else {
         QTextStream(stdout) << "Unknown protocol. Exiting...\n";
         return 3;
@@ -124,5 +120,6 @@ int main(int argc, char *argv[])
     }
     QTextStream(stdout) << "Ready.\n";
 
-    return a.exec();
+    int res = a.exec();
+    return res;
 }

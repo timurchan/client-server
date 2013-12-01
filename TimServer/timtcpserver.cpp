@@ -7,6 +7,11 @@ TimTcpServer::TimTcpServer(QObject *parent) : QTcpServer(parent)
 {
 }
 
+TimTcpServer::~TimTcpServer()
+{
+    bool q = 1;
+}
+
 void TimTcpServer::incomingConnection(int socketfd)
 {
     QTcpSocket *client = new QTcpSocket(this);
