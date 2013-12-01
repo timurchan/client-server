@@ -6,15 +6,21 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QTcpSocket>
+#include <QUdpSocket>
 
 namespace Ui {
-class MainWindow;
-class Form;
+    class MainWindow;
+    class Form;
 }
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+
+    enum ProtocolType {
+       UDP,
+       TCP
+    };
 
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -38,10 +44,14 @@ private slots:
 
     void on_actionExit_triggered();
 
-    void readyRead();
-    void connected();
+    void readyReadTcp();
+    void readyReadUdp();
+    void connectedTcp();
+    void connectedUdp();
 
     void on_applyPB_clicked();
+
+    void on_pbProcessMessage_clicked();
 
 private: // service functions
     void default_connections();
@@ -53,11 +63,15 @@ private:
 
 
 
-    QTcpSocket *socket;
+    QTcpSocket *socketTcp;
+    QUdpSocket *socketUdp;
+    //QAbstractSocket *socket;
+    QUdpSocket *udpOutSocket;
 
     QString m_host;
     int m_port;
-    QString m_protocol_type;
+    //QString m_protocol_type;
+    ProtocolType m_protocolType;
 
     /*
     QPushButton *btn ;

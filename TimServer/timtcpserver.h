@@ -3,20 +3,22 @@
 
 #include <QTcpServer>
 
-class TimServer : public QTcpServer
+class TimTcpServer : public QTcpServer
 {
     Q_OBJECT
 
 public:
-    TimServer(QObject *parent=0);
+    TimTcpServer(QObject *parent=0);
 
 private slots:
     void readyRead();
     void disconnected();
-    void sendUserList();
 
 protected:
     void incomingConnection(int socketfd);
+
+private:
+    void sendUserList();
 
 private:
     typedef QMap<QTcpSocket*, QString> ClientInfoContainer;

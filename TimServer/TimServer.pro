@@ -16,7 +16,9 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp \
-    timserver.cpp
+    timudpserver.cpp \
+    timtcpserver.cpp
 
 HEADERS += \
-    timserver.h
+    timudpserver.h \
+    timtcpserver.h

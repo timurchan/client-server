@@ -21,6 +21,7 @@
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QPlainTextEdit>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QWidget>
@@ -39,9 +40,10 @@ public:
     QLabel *clientsL;
     QPlainTextEdit *plainTextEdit;
     QLabel *messageLbl;
-    QLineEdit *lineEdit;
     QListView *clientsView;
     QListWidget *clientsWidget;
+    QLineEdit *leMessage;
+    QPushButton *pbProcessMessage;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
 
@@ -88,12 +90,7 @@ public:
         messageLbl = new QLabel(gridLayoutWidget);
         messageLbl->setObjectName(QStringLiteral("messageLbl"));
 
-        gridLayout->addWidget(messageLbl, 4, 0, 1, 1);
-
-        lineEdit = new QLineEdit(gridLayoutWidget);
-        lineEdit->setObjectName(QStringLiteral("lineEdit"));
-
-        gridLayout->addWidget(lineEdit, 4, 1, 1, 2);
+        gridLayout->addWidget(messageLbl, 5, 0, 1, 1);
 
         clientsView = new QListView(gridLayoutWidget);
         clientsView->setObjectName(QStringLiteral("clientsView"));
@@ -104,6 +101,16 @@ public:
         clientsWidget->setObjectName(QStringLiteral("clientsWidget"));
 
         gridLayout->addWidget(clientsWidget, 2, 2, 1, 1);
+
+        leMessage = new QLineEdit(gridLayoutWidget);
+        leMessage->setObjectName(QStringLiteral("leMessage"));
+
+        gridLayout->addWidget(leMessage, 5, 1, 1, 1);
+
+        pbProcessMessage = new QPushButton(gridLayoutWidget);
+        pbProcessMessage->setObjectName(QStringLiteral("pbProcessMessage"));
+
+        gridLayout->addWidget(pbProcessMessage, 5, 2, 1, 1);
 
         MainWindow->setCentralWidget(centralWidget);
         mainToolBar = new QToolBar(MainWindow);
@@ -140,6 +147,7 @@ public:
 #endif // QT_NO_TOOLTIP
         clientsL->setText(QApplication::translate("MainWindow", "Clients:", 0));
         messageLbl->setText(QApplication::translate("MainWindow", "Message:", 0));
+        pbProcessMessage->setText(QApplication::translate("MainWindow", "Text to server for frocessing", 0));
     } // retranslateUi
 
 };

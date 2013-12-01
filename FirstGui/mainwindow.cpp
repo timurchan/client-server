@@ -12,41 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     tuneUpUI->setupUi(tuneUpWidget);
 
-    socket = new QTcpSocket(this);
-
-    connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
-    connect(socket, SIGNAL(connected()), this, SLOT(connected()));
-
     default_connections();
-
-    //ui->lineEdit->setText("127.0.0.1");
-/*
-    btn = new QPushButton("Apply", this);
-    btn->show();
-    connect(btn, SIGNAL(clicked()), this, SLOT(onBtnClicked()));
-
-    edit = new QLineEdit(this);
-    edit->move(50, 50);
-    edit->show();
-
-*/
-
-
-    //QStringList lst;
-//    lwg = new QListWidget(this);
-//    QListWidgetItem* pitem = 0;
-
-    //lwg->setIconSize(QSize(48, 48));
-//    lst << "Linux" << "Windows" << "MacOS" << "OS2";
-//    foreach(QString str, lst) {
-//        pitem = new QListWidgetItem(str, lwg);
-//        //pitem->setIcon(QPixmap(str + ".jpg"));
-//    }
-//    lwg->resize(200, 200);
-//    lwg->move(50,50);
-//    lwg->show();
-
-//    ui->stoping
 }
 
 MainWindow::~MainWindow()
@@ -54,47 +20,55 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-/*
-void MainWindow::on_pushButton_clicked()
-{
-
-}
-
-void MainWindow::on_comboBox_activated(const QString &arg1)
-{
-
-}
-
-void MainWindow::onBtnClicked()
-{
-    static int counter = 0;
-
-    edit->setText("123");
-    lwg->addItem(QString::number(counter++));
-}
-*/
-
 void MainWindow::on_comboBox_currentIndexChanged(const QString &arg1)
 {
+
     //ui->lineEdit->setText(QString("We'are using ") + arg1 + QString(" connection"));
 }
 
 void MainWindow::on_pbConnect_clicked()
 {
-    //ui->lineEdit->setText(QString("Pushed Connect button"));
-    //socket->connectToHost(ui->lineEdit->text(), 4200);
+
 }
 
 void MainWindow::on_actionServerConnect_triggered()
 {
     ui->statusBar->showMessage(QString("Trying to connect to the server..."));
 
+    if(m_protocolType == UDP)
+    {
+        socketUdp = new QUdpSocket(this);
+        bool isBind = socketUdp->bind(QHostAddress::LocalHost, 7755); // listen from server
+        if(isBind)
+        {
+            connect(socketUdp, SIGNAL(readyRead()), this, SLOT(readyReadUdp()));
+
+            udpOutSocket = new QUdpSocket(this);
+            connectedUdp();
+
+            ui->statusBar->showMessage(QString("server ip: ") + m_host +
+                                       QString(", port: ") + QString::number((int)m_port));
+        }
+        else
+        {
+            ui->statusBar->showMessage("Bind local port for listen server fail.");
+        }
+
+    }
+    else // TCP
+    {
+        socketTcp = new QTcpSocket(this);
+        connect(socketTcp, SIGNAL(readyRead()), this, SLOT(readyReadTcp()));
+        connect(socketTcp, SIGNAL(connected()), this, SLOT(connectedTcp()));
+        socketTcp->connectToHost(m_host, m_port);
+
+        ui->statusBar->showMessage(QString("server ip: ") + m_host +
+                                   QString(", port: ") + QString::number((int)m_port));
+    }
 
 
-    //socket->connectToHost(QString("1.1.1.1"), 4200);
-    socket->connectToHost(m_host, m_port);
-    ui->statusBar->showMessage(QString("server ip: ") + socket->peerName() +
-                               QString(", port: ") + QString::number((int)socket->peerPort()));
+
+
 }
 
 //void MainWindow::on_actionServerTune_triggered()
@@ -125,15 +99,31 @@ void MainWindow::on_actionExit_triggered()
     this->close();
 }
 
-// This function gets called whenever the chat server has sent us some text:
-void MainWindow::readyRead()
+void MainWindow::readyReadUdp()
+{
+    //QUdpSocket* udpSocket = dynamic_cast<QUdpSocket*>(socket);
+    while (socketUdp->hasPendingDatagrams()) {
+        QByteArray datagram;
+        datagram.resize(socketUdp->pendingDatagramSize());
+        QHostAddress sender;
+        quint16 senderPort;
+
+        socketUdp->readDatagram(datagram.data(), datagram.size(),
+                                &sender, &senderPort);
+
+        qDebug() << "sender ip : " << sender.toString()
+                 << ", port : " << QString::number(senderPort);
+    }
+}
+
+void MainWindow::readyReadTcp()
 {
     // We'll loop over every (complete) line of text that the server has sent us:
-    while(socket->canReadLine())
+    while(socketTcp->canReadLine())
     {
         // Here's the line the of text the server sent us (we use UTF-8 so
         // that non-English speakers can chat in their native language)
-        QString line = QString::fromUtf8(socket->readLine()).trimmed();
+        QString line = QString::fromUtf8(socketTcp->readLine()).trimmed();
 
         // These two regular expressions describe the kinds of messages
         // the server can send us:
@@ -145,7 +135,7 @@ void MainWindow::readyRead()
         // list of users so we can show that list in our GUI:
         QRegExp usersRegex("^/users:(.*)$");
 
-        // Is this a users message:
+        // users message:
         if(usersRegex.indexIn(line) != -1)
         {
             //QListWidgetItem* pitem = 0;
@@ -167,24 +157,34 @@ void MainWindow::readyRead()
             //new QListWidgetItem(QPixmap(":/user.png"), user, userListWidget);
             }
         }
-        // Is this a normal chat message:
-//        else if(messageRegex.indexIn(line) != -1)
-//        {
-//            // If so, append this message to our chat box:
-//            QString user = messageRegex.cap(1);
-//            QString message = messageRegex.cap(2);
-
-//            roomTextEdit->append("<b>" + user + "</b>: " + message);
-//        }
+        // result after process client`s message
+        //else if(messageRegex.indexIn(line) != -1)
+        else
+        {
+            ui->leMessage->setText(line);
+        }
     }
 }
 
-// This function gets called when our socket has successfully connected to the chat
-// server. (see the connect() call in the MainWindow constructor).
-void MainWindow::connected()
+void MainWindow::connectedUdp()
+{
+    QString str = "initString\n";
+    QByteArray data;
+    QDataStream out(&data, QIODevice::WriteOnly);
+    out << qint16(0);
+    out << str;
+    out.device()->seek(qint16(0));
+    int sz = data.size();
+    out << qint16(data.size() - sizeof(qint16));
+    //udpOutSocket->writeDatagram(data, QHostAddress::LocalHost, 4300);
+
+    udpOutSocket->writeDatagram("Servers, where are you?", QHostAddress("127.0.0.1"), quint16(4300) );
+}
+
+void MainWindow::connectedTcp()
 {
     //socket->write(QString("/me:" + userLineEdit->text() + "\n").toUtf8());
-    socket->write(QString("initString\n").toUtf8());
+    socketTcp->write(QString("initString\n").toUtf8());
 }
 
 void MainWindow::on_applyPB_clicked()
@@ -194,25 +194,29 @@ void MainWindow::on_applyPB_clicked()
     m_host = tuneUpUI->hostLE->text();
     bool ok = false;
     const int port = tuneUpUI->portLE->text().toInt(&ok);
-    m_port = ok ? port : 4200;
-//    if (ok)
-//    {
-//        m_port = port;
-//    }
-//    else
-//    {
-//        m_port = 4200;
-//    }
+    m_port = ok ? port : 5300;
+
     const int idx = tuneUpUI->protocolCB->currentIndex();
-    m_protocol_type = tuneUpUI->protocolCB->itemText(idx);
+    //m_protocol_type = tuneUpUI->protocolCB->itemText(idx);
+    if(tuneUpUI->protocolCB->itemText(idx) == "UDP") {
+        m_protocolType = UDP;
+    } else { // TCP
+        m_protocolType = TCP;
+    }
 }
 
 void MainWindow::default_connections()
 {
     m_host = QString("127.0.0.1");
-    m_port = 4200;
-    m_protocol_type = "TCP";
+    m_port = 5300;
+    m_protocolType = TCP;
+    //m_protocolType = UDP;
     tuneUpUI->hostLE->setText(m_host);
     tuneUpUI->portLE->setText(QString::number(m_port));
     tuneUpUI->protocolCB->setCurrentIndex(0);
+}
+
+void MainWindow::on_pbProcessMessage_clicked()
+{
+    socketTcp->write(QString("/message:" + ui->leMessage->text() + "\n").toUtf8());
 }

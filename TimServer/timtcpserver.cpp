@@ -1,12 +1,13 @@
 #include <QTcpSocket>
 #include <QStringList>
-#include "timserver.h"
 
-TimServer::TimServer(QObject *parent) : QTcpServer(parent)
+#include "timtcpserver.h"
+
+TimTcpServer::TimTcpServer(QObject *parent) : QTcpServer(parent)
 {
 }
 
-void TimServer::incomingConnection(int socketfd)
+void TimTcpServer::incomingConnection(int socketfd)
 {
     QTcpSocket *client = new QTcpSocket(this);
     client->setSocketDescriptor(socketfd);
@@ -20,13 +21,15 @@ void TimServer::incomingConnection(int socketfd)
     connect(client, SIGNAL(disconnected()), this, SLOT(disconnected()));
 }
 
-void TimServer::readyRead()
+void TimTcpServer::readyRead()
 {
     QTcpSocket *client = (QTcpSocket*)sender();
     while(client->canReadLine())
     {
         QString line = QString::fromUtf8(client->readLine()).trimmed();
         qDebug() << "Read line:" << line;
+
+        QRegExp messageRegex("^/message:(.*)$");
 
         QString initString = "initString";
         if(line == initString)
@@ -36,6 +39,14 @@ void TimServer::readyRead()
                 it.key()->write(QString("Server:" + it.value() + " has joined.\n").toUtf8());
             }
             sendUserList();
+        }
+        else if(messageRegex.indexIn(line) != -1)
+        {
+            QString message = line;
+            QString newMessage = message.toUpper();
+            QString user = clients[client];
+            QTextStream(stdout) << user << ": " << message << " -> " << newMessage << "\n";
+            client->write(QString(message + "\n").toUtf8());
         }
         else if(clients.contains(client))
         {
@@ -56,7 +67,7 @@ void TimServer::readyRead()
     }
 }
 
-void TimServer::disconnected()
+void TimTcpServer::disconnected()
 {
     QTcpSocket *client = (QTcpSocket*)sender();
     qDebug() << "Client disconnected:" << client->peerAddress().toString();
@@ -66,7 +77,7 @@ void TimServer::disconnected()
     sendUserList();
 }
 
-void TimServer::sendUserList()
+void TimTcpServer::sendUserList()
 {
     QStringList userList(clients.values());
 
