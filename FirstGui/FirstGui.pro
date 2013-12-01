@@ -6,10 +6,9 @@
 
 QT       += core gui
 
-#greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 QT += network
-QT += widgets
 
 TARGET = FirstGui
 TEMPLATE = app
@@ -21,7 +20,7 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui
-FORMS    += tune_connection.ui
+FORMS    += tuneUpPanel.ui
 
 RESOURCES += \
     client.qrc

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>488</width>
-    <height>388</height>
+    <width>391</width>
+    <height>410</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,44 +18,53 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>11</y>
-      <width>471</width>
-      <height>311</height>
+      <y>291</y>
+      <width>371</width>
+      <height>61</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="2">
-      <widget class="QLabel" name="clientsL">
-       <property name="text">
-        <string>Clients:</string>
-       </property>
-      </widget>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="messageLineEdit"/>
      </item>
-     <item row="2" column="0" colspan="2">
-      <widget class="QPlainTextEdit" name="plainTextEdit"/>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="messageLbl">
+     <item row="0" column="0">
+      <widget class="QLabel" name="messageLabel">
        <property name="text">
         <string>Message:</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="2">
-      <widget class="QListView" name="clientsView"/>
-     </item>
-     <item row="2" column="2">
+    </layout>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>371</width>
+      <height>271</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="1" column="1">
       <widget class="QListWidget" name="clientsWidget"/>
      </item>
-     <item row="5" column="1">
-      <widget class="QLineEdit" name="leMessage"/>
-     </item>
-     <item row="5" column="2">
-      <widget class="QPushButton" name="pbProcessMessage">
+     <item row="0" column="0">
+      <widget class="QLabel" name="dialogLabel">
        <property name="text">
-        <string>Text to server for frocessing</string>
+        <string>Dialog</string>
        </property>
       </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLabel" name="clientsLabel">
+       <property name="text">
+        <string>Clients:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QTextEdit" name="dialogW"/>
      </item>
     </layout>
    </widget>

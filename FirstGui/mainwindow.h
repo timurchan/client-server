@@ -10,16 +10,23 @@
 
 namespace Ui {
     class MainWindow;
-    class Form;
+    class TuneUpForm;
 }
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-    enum ProtocolType {
-       UDP,
-       TCP
+    enum Protocol
+    {
+        TCP = 0,
+        UDP = 1
+    };
+
+    enum User
+    {
+        SERVER = 0,
+        CLIENT = 1
     };
 
 public:
@@ -36,9 +43,11 @@ private slots:
     void on_comboBox_currentIndexChanged(const QString &arg1);
     void on_pbConnect_clicked();
 
+    void onClickApplyTuneButton();
+
     void on_actionServerConnect_triggered();
 
-    //void on_actionServerTune_triggered();
+    void on_actionServerTune_triggered();
 
     void on_actionClientTune_triggered();
 
@@ -49,36 +58,39 @@ private slots:
     void connectedTcp();
     void connectedUdp();
 
-    void on_applyPB_clicked();
+//    void on_messageLineEdit_editingFinished();
 
-    void on_pbProcessMessage_clicked();
-
-private: // service functions
-    void default_connections();
+    void on_messageLineEdit_returnPressed();
 
 private:
-    QWidget *tuneUpWidget;
     Ui::MainWindow *ui;
-    Ui::Form *tuneUpUI;
+    Ui::TuneUpForm *tuneUpUi;
+    QWidget *tuneUpWidget;
 
-
+    QString m_host;
+    Protocol m_protocol_type;
+    int m_port;
+    int m_defaultPort;
 
     QTcpSocket *socketTcp;
     QUdpSocket *socketUdp;
     //QAbstractSocket *socket;
     QUdpSocket *udpOutSocket;
 
-    QString m_host;
-    int m_port;
-    int m_defaultPort;
-    //QString m_protocol_type;
-    ProtocolType m_protocolType;
 
     /*
     QPushButton *btn ;
-    QLineEdit *edit;
-    */
-    QListWidget* lwg;
+    QLineEdit *edit;*/
+    //QListWidget* lwg;
+private: // service function
+    void init_server_connection();
+    void appendDataToDialog(MainWindow::User user, const QString &str);
+
+private: // constants
+    static const int DEFAULT_PORT;
+    static const QString DEFAULT_HOST;
+    static const QString SERVER_COLOR;
+    static const QString CLIENT_COLOR;
 
 };
 

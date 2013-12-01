@@ -1,42 +1,91 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "ui_tune_connection.h"
+#include "ui_tuneUpPanel.h"
+
+const QString MainWindow::DEFAULT_HOST = QString("127.0.0.1");
+const int     MainWindow::DEFAULT_PORT = 4200;
+const QString MainWindow::SERVER_COLOR = QString("red");
+const QString MainWindow::CLIENT_COLOR = QString("blue");
 
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    tuneUpWidget(new QWidget()),
     ui(new Ui::MainWindow),
-    tuneUpUI(new Ui::Form)
+    tuneUpUi(new Ui::TuneUpForm),
+    tuneUpWidget(new QWidget()),
+    m_port(DEFAULT_PORT),
+    m_host(DEFAULT_HOST),
+    m_protocol_type(MainWindow::UDP)
 {
     ui->setupUi(this);
-    tuneUpUI->setupUi(tuneUpWidget);
+    tuneUpUi->setupUi(tuneUpWidget);
 
-    m_defaultPort = 5300;
-    default_connections();
+    ui->dialogW->setReadOnly(true);
+    init_server_connection();
+
+
+    connect(tuneUpUi->applyPushButton, SIGNAL(clicked()), this, SLOT(onClickApplyTuneButton()));
+
+//    ui->lineEdit->setText("127.0.0.1");
+/*
+    btn = new QPushButton("Apply", this);
+    btn->show();
+    connect(btn, SIGNAL(clicked()), this, SLOT(onBtnClicked()));
+
+    edit = new QLineEdit(this);
+    edit->move(50, 50);
+    edit->show();
+
+*/
+
+    //QStringList lst;
+//    lwg = new QListWidget(this);
+//    QListWidgetItem* pitem = 0;
+
+    //lwg->setIconSize(QSize(48, 48));
+//    lst << "Linux" << "Windows" << "MacOS" << "OS2";
+//    foreach(QString str, lst) {
+//        pitem = new QListWidgetItem(str, lwg);
+//        //pitem->setIcon(QPixmap(str + ".jpg"));
+//    }
+//    lwg->resize(200, 200);
+//    lwg->move(50,50);
+//    lwg->show();
+
+//    ui->stoping
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete tuneUpUi;
+    delete tuneUpWidget;
 }
 
-void MainWindow::on_comboBox_currentIndexChanged(const QString &arg1)
-{
-
-    //ui->lineEdit->setText(QString("We'are using ") + arg1 + QString(" connection"));
-}
-
-void MainWindow::on_pbConnect_clicked()
+/*
+void MainWindow::on_pushButton_clicked()
 {
 
 }
 
+void MainWindow::on_comboBox_activated(const QString &arg1)
+{
+
+}
+
+void MainWindow::onBtnClicked()
+{
+    static int counter = 0;
+
+    edit->setText("123");
+    lwg->addItem(QString::number(counter++));
+}
+*/
 void MainWindow::on_actionServerConnect_triggered()
 {
     ui->statusBar->showMessage(QString("Trying to connect to the server..."));
 
-    if(m_protocolType == UDP)
+    if(m_protocol_type == UDP)
     {
         socketUdp = new QUdpSocket(this);
         bool isBind = socketUdp->bind(QHostAddress::LocalHost, 7755); // listen from server
@@ -66,38 +115,38 @@ void MainWindow::on_actionServerConnect_triggered()
         ui->statusBar->showMessage(QString("server ip: ") + m_host +
                                    QString(", port: ") + QString::number((int)m_port));
     }
-
-
-
-
 }
 
-//void MainWindow::on_actionServerTune_triggered()
-//{
-//    ui->statusBar->showMessage(QString("Tune up server connection"));
-//}
-
-void MainWindow::on_actionClientTune_triggered()
+void MainWindow::on_comboBox_currentIndexChanged(const QString &arg1)
 {
-    ui->statusBar->showMessage(QString("Tune up client connection"));
-
-//    if (&tuneUpWidget == NULL)
-//        tuneUpWidget = new QWidget();
-    if (tuneUpWidget == NULL)
-    {
-        tuneUpWidget = new QWidget();
-        tuneUpUI->setupUi(tuneUpWidget);
-    }
-
-
-    tuneUpWidget->show();
-    connect(tuneUpUI->applyPB, SIGNAL(clicked()), this, SLOT(on_applyPB_clicked()));
+    //ui->lineEdit->setText(QString("We'are using ") + arg1 + QString(" connection"));
 }
 
-void MainWindow::on_actionExit_triggered()
+void MainWindow::on_pbConnect_clicked()
 {
-    ui->statusBar->showMessage(QString("Close connection"));
-    this->close();
+    //ui->lineEdit->setText(QString("Pushed Connect button"));
+    //socket->connectToHost(ui->lineEdit->text(), 4200);
+}
+
+void MainWindow::onClickApplyTuneButton()
+{
+    // TODO:
+    bool ok = false;
+    const int port = tuneUpUi->portLineEdit->text().toInt(&ok);
+    m_port = ok ? port : MainWindow::DEFAULT_PORT;
+
+    m_host = tuneUpUi->hostLineEdit->text();
+
+    const int idxCB = tuneUpUi->protocolComboBox->currentIndex();
+    m_protocol_type = (idxCB == 0) ? MainWindow::TCP : MainWindow::UDP;
+
+    tuneUpWidget->setVisible(false);
+}
+
+
+void MainWindow::on_actionServerTune_triggered()
+{
+    ui->statusBar->showMessage(QString("Tune up server connection"));
 }
 
 void MainWindow::readyReadUdp()
@@ -116,6 +165,83 @@ void MainWindow::readyReadUdp()
                  << ", port : " << QString::number(senderPort);
     }
 }
+void MainWindow::on_actionClientTune_triggered()
+{
+    ui->statusBar->showMessage(QString("Tune up client connection"));
+    if (tuneUpWidget == NULL)
+    {
+        tuneUpWidget = new QWidget();
+        tuneUpUi->setupUi(tuneUpWidget);
+        init_server_connection();
+    }
+    tuneUpWidget->setVisible(true);
+}
+
+void MainWindow::on_actionExit_triggered()
+{
+    ui->statusBar->showMessage(QString("Close connection"));
+    this->close();
+}
+
+
+
+void MainWindow::init_server_connection()
+{
+    tuneUpUi->hostLineEdit->setText(m_host);
+    tuneUpUi->portLineEdit->setText(QString::number(m_port));
+    tuneUpUi->protocolComboBox->setCurrentIndex(m_protocol_type);
+}
+
+void MainWindow::appendDataToDialog(MainWindow::User user_type, const QString &str)
+{
+    QString user_name = QString("unknown: ");
+    const QColor default_color = ui->dialogW->textColor();
+    QColor user_color = default_color;
+    switch (user_type)
+    {
+    case MainWindow::SERVER:
+        user_name = QString("server: ");
+        user_color = QColor(MainWindow::SERVER_COLOR);
+        break;
+    case MainWindow::CLIENT:
+        user_name = QString("me: ");
+        user_color = QColor(MainWindow::CLIENT_COLOR);
+        break;
+    }
+    ui->dialogW->setTextColor(user_color);
+    ui->dialogW->insertPlainText(user_name); //textCursor().insertText(text);
+    //ui->dialogW->append(user_name);
+    ui->dialogW->setTextColor(default_color);
+    ui->dialogW->insertPlainText(str + QString("\n"));
+    //ui->dialogW->append(str);
+    //ui->dialogW->append(QString());
+}
+
+
+void MainWindow::on_messageLineEdit_returnPressed()
+{
+    const QString text = ui->messageLineEdit->text();
+    if (text.isEmpty())
+        return;
+
+    appendDataToDialog(MainWindow::CLIENT, text);
+
+    /// TODO: write to socket
+    //socket->write(text.toUtf8());
+
+
+
+    //socket->flush()
+    ui->messageLineEdit->clear();
+
+}
+
+//void MainWindow::on_messageLineEdit_returnPressed()
+//{
+
+//}
+
+
 
 void MainWindow::readyReadTcp()
 {
@@ -162,7 +288,7 @@ void MainWindow::readyReadTcp()
         //else if(messageRegex.indexIn(line) != -1)
         else
         {
-            ui->leMessage->setText(line);
+
         }
     }
 }
@@ -179,45 +305,11 @@ void MainWindow::connectedUdp()
     out << qint16(data.size() - sizeof(qint16));
     //udpOutSocket->writeDatagram(data, QHostAddress::LocalHost, 4300);
 
-    udpOutSocket->writeDatagram("Servers, where are you?\n", QHostAddress("127.0.0.1"), quint16(m_defaultPort) );
+    udpOutSocket->writeDatagram("Servers, where are you?\n", QHostAddress("127.0.0.1"), quint16(m_port) );
 }
 
 void MainWindow::connectedTcp()
 {
     //socket->write(QString("/me:" + userLineEdit->text() + "\n").toUtf8());
     socketTcp->write(QString("initString\n").toUtf8());
-}
-
-void MainWindow::on_applyPB_clicked()
-{
-    // have to extract data from controls (host, port, protocol type)
-    tuneUpWidget->hide();
-    m_host = tuneUpUI->hostLE->text();
-    bool ok = false;
-    const int port = tuneUpUI->portLE->text().toInt(&ok);
-    m_port = ok ? port : m_defaultPort;
-
-    const int idx = tuneUpUI->protocolCB->currentIndex();
-    //m_protocol_type = tuneUpUI->protocolCB->itemText(idx);
-    if(tuneUpUI->protocolCB->itemText(idx) == "UDP") {
-        m_protocolType = UDP;
-    } else { // TCP
-        m_protocolType = TCP;
-    }
-}
-
-void MainWindow::default_connections()
-{
-    m_host = QString("127.0.0.1");
-    m_port = m_defaultPort;
-    //m_protocolType = TCP;
-    m_protocolType = UDP;
-    tuneUpUI->hostLE->setText(m_host);
-    tuneUpUI->portLE->setText(QString::number(m_port));
-    tuneUpUI->protocolCB->setCurrentIndex(0);
-}
-
-void MainWindow::on_pbProcessMessage_clicked()
-{
-    socketTcp->write(QString("/message:" + ui->leMessage->text() + "\n").toUtf8());
 }

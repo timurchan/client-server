@@ -9,7 +9,7 @@ TimUdpServer::TimUdpServer(QObject *parent) :
 bool TimUdpServer::initSocket()
 {
     udpSocket = new QUdpSocket(this);
-    bool isBind = udpSocket->bind(QHostAddress::LocalHost, 5300);
+    bool isBind = udpSocket->bind(QHostAddress::LocalHost, 4200);
     if(isBind)
     {
         connect(udpSocket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
