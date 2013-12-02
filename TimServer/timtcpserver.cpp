@@ -39,9 +39,12 @@ void TimTcpServer::readyRead()
         QString initString = "initString";
         if(line == initString)
         {
+
+
             for(ClientInfoContainer::iterator it = clients.begin(); it != clients.end(); ++it)
             {
-                it.key()->write(QString("Server:" + it.value() + " has joined.\n").toUtf8());
+                QString str = QString("Server:" + clients[client] + " has joined.\n");
+                it.key()->write(str.toUtf8());
             }
             sendUserList();
         }

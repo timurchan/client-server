@@ -7,7 +7,7 @@ const QString MainWindow::DEFAULT_HOST = QString("127.0.0.1");
 const int     MainWindow::DEFAULT_PORT = 4200;
 const QString MainWindow::SERVER_COLOR = QString("red");
 const QString MainWindow::CLIENT_COLOR = QString("blue");
-const int     MainWindow::DEFAULT_PORT_CLIENT = 7756;
+const int     MainWindow::DEFAULT_PORT_CLIENT = 7755;
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -37,25 +37,7 @@ MainWindow::~MainWindow()
     delete tuneUpWidget;
 }
 
-/*
-void MainWindow::on_pushButton_clicked()
-{
 
-}
-
-void MainWindow::on_comboBox_activated(const QString &arg1)
-{
-
-}
-
-void MainWindow::onBtnClicked()
-{
-    static int counter = 0;
-
-    edit->setText("123");
-    lwg->addItem(QString::number(counter++));
-}
-*/
 void MainWindow::on_actionServerConnect_triggered()
 {
     ui->statusBar->showMessage(QString("Trying to connect to the server..."));
@@ -95,16 +77,6 @@ void MainWindow::on_actionServerConnect_triggered()
     }
 }
 
-void MainWindow::on_comboBox_currentIndexChanged(const QString &arg1)
-{
-    //ui->lineEdit->setText(QString("We'are using ") + arg1 + QString(" connection"));
-}
-
-void MainWindow::on_pbConnect_clicked()
-{
-    //ui->lineEdit->setText(QString("Pushed Connect button"));
-    //socket->connectToHost(ui->lineEdit->text(), 4200);
-}
 
 void MainWindow::onClickApplyTuneButton()
 {
@@ -121,11 +93,6 @@ void MainWindow::onClickApplyTuneButton()
     tuneUpWidget->setVisible(false);
 }
 
-
-void MainWindow::on_actionServerTune_triggered()
-{
-    ui->statusBar->showMessage(QString("Tune up server connection"));
-}
 
 void MainWindow::readyReadUdp()
 {
@@ -230,37 +197,32 @@ void MainWindow::appendDataToDialog(MainWindow::User user_type, const QString &s
 
 void MainWindow::on_messageLineEdit_returnPressed()
 {
-    const QString text = ui->messageLineEdit->text();
+    QString text = ui->messageLineEdit->text();
     if (text.isEmpty())
         return;
 
     appendDataToDialog(MainWindow::CLIENT, text);
 
-    /// TODO: write to socket
-    //socket->write(text.toUtf8());
+    if(m_protocol_type == UDP) {
+        XMLCommandsParser parser(XMLCommandsParser::CT_MESSAGE, text);
+        QString str = parser.toString();
 
-    XMLCommandsParser parser(XMLCommandsParser::CT_MESSAGE, text);
-    QString str = parser.toString();
+        QByteArray data;
+        QDataStream out(&data, QIODevice::WriteOnly);
+        out << qint16(0);
+        out << str;
+        out.device()->seek(qint16(0));
+        int sz = data.size();
+        out << qint16(data.size() - sizeof(qint16));
+        udpOutSocket->writeDatagram(data, QHostAddress(m_host), quint16(m_port));
+    } else { // TCP
 
-    QByteArray data;
-    QDataStream out(&data, QIODevice::WriteOnly);
-    out << qint16(0);
-    out << str;
-    out.device()->seek(qint16(0));
-    int sz = data.size();
-    out << qint16(data.size() - sizeof(qint16));
-    udpOutSocket->writeDatagram(data, QHostAddress(m_host), quint16(m_port));
+        text += "\n";
+        socketTcp->write(text.toUtf8());
+    }
 
-
-    //socket->flush()
     ui->messageLineEdit->clear();
-
 }
-
-//void MainWindow::on_messageLineEdit_returnPressed()
-//{
-
-//}
 
 
 
@@ -297,6 +259,7 @@ void MainWindow::readyReadTcp()
         }
         else
         {
+            appendDataToDialog(SERVER, line);
 
         }
     }

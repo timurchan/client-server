@@ -34,20 +34,9 @@ public:
     ~MainWindow();
 
 private slots:
-    /*
-    void on_pushButton_clicked();
-    void on_comboBox_activated(const QString &arg1);
-    void onBtnClicked();
-    */
-
-    void on_comboBox_currentIndexChanged(const QString &arg1);
-    void on_pbConnect_clicked();
-
     void onClickApplyTuneButton();
 
     void on_actionServerConnect_triggered();
-
-    void on_actionServerTune_triggered();
 
     void on_actionClientTune_triggered();
 
@@ -57,8 +46,6 @@ private slots:
     void readyReadUdp();
     void connectedTcp();
     void connectedUdp();
-
-//    void on_messageLineEdit_editingFinished();
 
     void on_messageLineEdit_returnPressed();
 
