@@ -18,7 +18,10 @@ MainWindow::MainWindow(QWidget *parent) :
     m_port(DEFAULT_PORT),
     m_host(DEFAULT_HOST),
     m_protocol_type(MainWindow::UDP),
-    m_isBindUdpInSocket(false)
+    m_isBindUdpInSocket(false),
+    socketUdp(0),
+    socketTcp(0),
+    udpOutSocket()
 {
     ui->setupUi(this);
     tuneUpUi->setupUi(tuneUpWidget);
@@ -67,13 +70,19 @@ void MainWindow::on_actionServerConnect_triggered()
     }
     else // TCP
     {
-        socketTcp = new QTcpSocket(this);
-        connect(socketTcp, SIGNAL(readyRead()), this, SLOT(readyReadTcp()));
-        connect(socketTcp, SIGNAL(connected()), this, SLOT(connectedTcp()));
-        socketTcp->connectToHost(m_host, m_port);
+        if(! socketTcp) {
+            socketTcp = new QTcpSocket(this);
+            connect(socketTcp, SIGNAL(readyRead()), this, SLOT(readyReadTcp()));
+            connect(socketTcp, SIGNAL(connected()), this, SLOT(connectedTcp()));
+            socketTcp->connectToHost(m_host, m_port);
 
-        ui->statusBar->showMessage(QString("server ip: ") + m_host +
-                                   QString(", port: ") + QString::number((int)m_port));
+            ui->statusBar->showMessage(QString("Connect to server ip: ") + m_host +
+                                       QString(", port: ") + QString::number((int)m_port));
+        } else {
+            ui->statusBar->showMessage(QString("Connected to server ip: ") + m_host +
+                                       QString(", port: ") + QString::number((int)m_port) +
+                                       QString("is already done"));
+        }
     }
 }
 

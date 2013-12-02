@@ -39,8 +39,6 @@ void TimTcpServer::readyRead()
         QString initString = "initString";
         if(line == initString)
         {
-
-
             for(ClientInfoContainer::iterator it = clients.begin(); it != clients.end(); ++it)
             {
                 QString str = QString("Server:" + clients[client] + " has joined.\n");
