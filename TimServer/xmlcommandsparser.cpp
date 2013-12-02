@@ -80,6 +80,14 @@ XMLCommandsParser::XMLCommandsParser(const CommandType &command,
     commandsElement.appendChild(oneCommand);
 }
 
+XMLCommandsParser::XMLCommandsParser(const CommandType &command,
+                                     int port)
+{
+    QString strCommand = initCommands(command);
+    QDomElement oneCommand = makeElement("command", strCommand, QString::number(port));
+    commandsElement.appendChild(oneCommand);
+}
+
 XMLCommandsParser::XMLCommandsParser(const QString& xml)
 {
     if(doc.setContent(xml)) {
@@ -101,6 +109,9 @@ void XMLCommandsParser::traverseNode(const QDomNode& node)
                   commands.insert(cmd);
                   if(attrName == "message") {
                       message = domElement.text();
+                  }
+                  if(attrName == "init") {
+                      port = domElement.text().toInt();
                   }
               } else if(domElement.tagName() == "user"){
                   users << domElement.text();

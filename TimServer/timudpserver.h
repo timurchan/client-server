@@ -12,10 +12,6 @@ public:
     explicit TimUdpServer(QObject *parent = 0);
 
     bool initSocket();
-    void sendUserList(const QString& host, int port);
-
-private slots:
-    void readPendingDatagrams();
 
 private:
     struct Address {
@@ -29,6 +25,16 @@ private:
         int port;
     };
 
+private:
+
+    void sendUserList();
+    void sendMessage(const QString& message,
+                     const Address& exceptAddress);
+
+private slots:
+    void readPendingDatagrams();
+
+private:
     QVector<Address> clients;
     QUdpSocket *udpSocket;
 };

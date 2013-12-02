@@ -7,6 +7,7 @@ const QString MainWindow::DEFAULT_HOST = QString("127.0.0.1");
 const int     MainWindow::DEFAULT_PORT = 4200;
 const QString MainWindow::SERVER_COLOR = QString("red");
 const QString MainWindow::CLIENT_COLOR = QString("blue");
+const int     MainWindow::DEFAULT_PORT_CLIENT = 7756;
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -25,37 +26,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->dialogW->setReadOnly(true);
     init_server_connection();
 
-    
-
     connect(tuneUpUi->applyPushButton, SIGNAL(clicked()), this, SLOT(onClickApplyTuneButton()));
 
-//    ui->lineEdit->setText("127.0.0.1");
-/*
-    btn = new QPushButton("Apply", this);
-    btn->show();
-    connect(btn, SIGNAL(clicked()), this, SLOT(onBtnClicked()));
-
-    edit = new QLineEdit(this);
-    edit->move(50, 50);
-    edit->show();
-
-*/
-
-    //QStringList lst;
-//    lwg = new QListWidget(this);
-//    QListWidgetItem* pitem = 0;
-
-    //lwg->setIconSize(QSize(48, 48));
-//    lst << "Linux" << "Windows" << "MacOS" << "OS2";
-//    foreach(QString str, lst) {
-//        pitem = new QListWidgetItem(str, lwg);
-//        //pitem->setIcon(QPixmap(str + ".jpg"));
-//    }
-//    lwg->resize(200, 200);
-//    lwg->move(50,50);
-//    lwg->show();
-
-//    ui->stoping
 }
 
 MainWindow::~MainWindow()
@@ -93,7 +65,7 @@ void MainWindow::on_actionServerConnect_triggered()
         socketUdp = new QUdpSocket(this);
         if(!m_isBindUdpInSocket)
         {
-            m_isBindUdpInSocket = socketUdp->bind(QHostAddress::LocalHost, 7755); // listen from server
+            m_isBindUdpInSocket = socketUdp->bind(QHostAddress::LocalHost, DEFAULT_PORT_CLIENT); // listen from server
         }
         if(m_isBindUdpInSocket)
         {
@@ -183,7 +155,6 @@ void MainWindow::readyReadUdp()
 
         XMLCommandsParser::CommandsContainer commands = parser.getCommands();
         if(commands.find(XMLCommandsParser::CT_USERS) != commands.end()) {
-
             ui->clientsWidget->clear();
             ui->clientsWidget->setIconSize(QSize(24, 24));
 
@@ -193,6 +164,14 @@ void MainWindow::readyReadUdp()
                 new QListWidgetItem(QPixmap("user.png"), user, ui->clientsWidget);
             }
         }
+        if(commands.find(XMLCommandsParser::CT_MESSAGE) != commands.end()) {
+            const QString text = parser.getMessage();
+            if (text.isEmpty())
+                return;
+
+            appendDataToDialog(MainWindow::SERVER, text);
+        }
+
 
     }
 }
@@ -260,6 +239,17 @@ void MainWindow::on_messageLineEdit_returnPressed()
     /// TODO: write to socket
     //socket->write(text.toUtf8());
 
+    XMLCommandsParser parser(XMLCommandsParser::CT_MESSAGE, text);
+    QString str = parser.toString();
+
+    QByteArray data;
+    QDataStream out(&data, QIODevice::WriteOnly);
+    out << qint16(0);
+    out << str;
+    out.device()->seek(qint16(0));
+    int sz = data.size();
+    out << qint16(data.size() - sizeof(qint16));
+    udpOutSocket->writeDatagram(data, QHostAddress(m_host), quint16(m_port));
 
 
     //socket->flush()
@@ -315,7 +305,7 @@ void MainWindow::readyReadTcp()
 void MainWindow::connectedUdp()
 {
     //QString str = "initString\n";
-    XMLCommandsParser parser(XMLCommandsParser::CT_INIT);
+    XMLCommandsParser parser(XMLCommandsParser::CT_INIT, DEFAULT_PORT_CLIENT);
     QString str = parser.toString();
 
     QByteArray data;
@@ -326,10 +316,6 @@ void MainWindow::connectedUdp()
     int sz = data.size();
     out << qint16(data.size() - sizeof(qint16));
     udpOutSocket->writeDatagram(data, QHostAddress(m_host), quint16(m_port));
-
-
-
-    //udpOutSocket->writeDatagram("Servers, where are you?\n", QHostAddress("127.0.0.1"), quint16(m_port) );
 }
 
 void MainWindow::connectedTcp()

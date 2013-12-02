@@ -89,6 +89,7 @@ private: // service function
 
 private: // constants
     static const int DEFAULT_PORT;
+    static const int DEFAULT_PORT_CLIENT;
     static const QString DEFAULT_HOST;
     static const QString SERVER_COLOR;
     static const QString CLIENT_COLOR;

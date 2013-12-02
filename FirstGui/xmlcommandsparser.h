@@ -18,6 +18,8 @@ public:
 
     XMLCommandsParser(const CommandType& command);
     XMLCommandsParser(const CommandType& command,
+                      int port);
+    XMLCommandsParser(const CommandType& command,
                       const QStringList& users);
     XMLCommandsParser(const CommandType& command,
                       const QString& message);
@@ -27,6 +29,7 @@ public:
     QString toString() const;
     QDomDocument toDocument() const;
 
+    int getPort() const { return port; }
     QString getMessage() const { return message; }
     QStringList getUsers() const { return users; }
     CommandsContainer getCommands() const { return commands; }
@@ -44,6 +47,7 @@ private:
     CommandsContainer commands;
     QStringList users;
     QString message;
+    int port;
 };
 
 #endif // XMLCOMMANDSPARSER_H
