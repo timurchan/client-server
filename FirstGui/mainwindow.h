@@ -71,6 +71,7 @@ private:
     Protocol m_protocol_type;
     int m_port;
     int m_defaultPort;
+    bool m_isBindUdpInSocket;
 
     QTcpSocket *socketTcp;
     QUdpSocket *socketUdp;

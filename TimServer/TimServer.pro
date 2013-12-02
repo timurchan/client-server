@@ -6,6 +6,7 @@
 
 QT       += core
 QT       += network
+QT       += xml
 QT       -= gui
 
 TARGET = TimServer
@@ -17,8 +18,10 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     timudpserver.cpp \
-    timtcpserver.cpp
+    timtcpserver.cpp \
+    xmlcommandsparser.cpp
 
 HEADERS += \
     timudpserver.h \
-    timtcpserver.h
+    timtcpserver.h \
+    xmlcommandsparser.h

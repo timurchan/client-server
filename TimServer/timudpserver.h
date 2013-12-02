@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QUdpSocket>
+#include <QVector>
 
 class TimUdpServer : public QObject
 {
@@ -11,16 +12,25 @@ public:
     explicit TimUdpServer(QObject *parent = 0);
 
     bool initSocket();
-    void sendUserList();
+    void sendUserList(const QString& host, int port);
 
 private slots:
     void readPendingDatagrams();
 
 private:
-    QUdpSocket* udpSocket;
+    struct Address {
+        Address() {}
+        Address(const QString& host_, int port_) :
+            host(host_),
+            port(port_)
+        {}
 
-    typedef QMap<QUdpSocket*, QString> ClientInfoContainer;
-    QMap<QUdpSocket*, QString> clients;
+        QString host;
+        int port;
+    };
+
+    QVector<Address> clients;
+    QUdpSocket *udpSocket;
 };
 
 #endif // TIMUDPSERVER_H

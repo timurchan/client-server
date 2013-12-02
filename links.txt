@@ -9,3 +9,25 @@ http://habrahabr.ru/post/31469/ - Matthias Ettrich
 отделение функционала в поток
 http://vasinnet.blogspot.ru/2012/08/recommended-way-to-using-qthread.html
 http://habrahabr.ru/post/150274/
+
+Qt-тренинг для разработчиков. День второй. Часть 3
+http://www.youtube.com/watch?v=DKheXCKpIsk
+
+http://www.youtube.com/watch?v=NXGE5XUrRSI && http://voidrealms.com/
+
+
+
+
+
+<commands>
+ <command type="init"></command>
+ <command type="users">
+  <user>192.9.200.72:12345</user>
+  <user>127.0.0.1:54321</user>
+ <command>
+ <command type="message">My cool message!</command> 
+</commands>
+
+сделать, чтобы один клиент подключаться либо совсем не мог, либо если и нажимал кнопку, то это не приводило к размножениею одного и того же клиента на сервере
+
+

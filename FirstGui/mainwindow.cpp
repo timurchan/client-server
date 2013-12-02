@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "ui_tuneUpPanel.h"
+#include "xmlcommandsparser.h"
 
 const QString MainWindow::DEFAULT_HOST = QString("127.0.0.1");
 const int     MainWindow::DEFAULT_PORT = 4200;
@@ -15,7 +16,8 @@ MainWindow::MainWindow(QWidget *parent) :
     tuneUpWidget(new QWidget()),
     m_port(DEFAULT_PORT),
     m_host(DEFAULT_HOST),
-    m_protocol_type(MainWindow::UDP)
+    m_protocol_type(MainWindow::UDP),
+    m_isBindUdpInSocket(false)
 {
     ui->setupUi(this);
     tuneUpUi->setupUi(tuneUpWidget);
@@ -23,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->dialogW->setReadOnly(true);
     init_server_connection();
 
+    
 
     connect(tuneUpUi->applyPushButton, SIGNAL(clicked()), this, SLOT(onClickApplyTuneButton()));
 
@@ -88,8 +91,11 @@ void MainWindow::on_actionServerConnect_triggered()
     if(m_protocol_type == UDP)
     {
         socketUdp = new QUdpSocket(this);
-        bool isBind = socketUdp->bind(QHostAddress::LocalHost, 7755); // listen from server
-        if(isBind)
+        if(!m_isBindUdpInSocket)
+        {
+            m_isBindUdpInSocket = socketUdp->bind(QHostAddress::LocalHost, 7755); // listen from server
+        }
+        if(m_isBindUdpInSocket)
         {
             connect(socketUdp, SIGNAL(readyRead()), this, SLOT(readyReadUdp()));
 
@@ -151,18 +157,43 @@ void MainWindow::on_actionServerTune_triggered()
 
 void MainWindow::readyReadUdp()
 {
-    //QUdpSocket* udpSocket = dynamic_cast<QUdpSocket*>(socket);
+
+    QTextStream(stdout) << "Datagram reveiced.\n";
     while (socketUdp->hasPendingDatagrams()) {
         QByteArray datagram;
         datagram.resize(socketUdp->pendingDatagramSize());
-        QHostAddress sender;
+        QHostAddress senderHost;
         quint16 senderPort;
 
-        socketUdp->readDatagram(datagram.data(), datagram.size(),
-                                &sender, &senderPort);
+        QDataStream in(&datagram, QIODevice::ReadOnly);
 
-        qDebug() << "sender ip : " << sender.toString()
-                 << ", port : " << QString::number(senderPort);
+        socketUdp->readDatagram(datagram.data(), datagram.size(), &senderHost, &senderPort);
+
+        qint16 sz = 0;
+        QString str;
+        in >> sz;
+        in >> str;
+
+        QString senderHostStr = senderHost.toString();
+        qDebug() << "sender ip : " << senderHostStr;
+        qDebug() << "sender port : " << senderPort;
+
+        //QString str(datagram);
+        XMLCommandsParser parser(str);
+
+        XMLCommandsParser::CommandsContainer commands = parser.getCommands();
+        if(commands.find(XMLCommandsParser::CT_USERS) != commands.end()) {
+
+            ui->clientsWidget->clear();
+            ui->clientsWidget->setIconSize(QSize(24, 24));
+
+            QStringList users = parser.getUsers();
+            foreach(QString user, users)
+            {
+                new QListWidgetItem(QPixmap("user.png"), user, ui->clientsWidget);
+            }
+        }
+
     }
 }
 void MainWindow::on_actionClientTune_triggered()
@@ -265,27 +296,15 @@ void MainWindow::readyReadTcp()
         // users message:
         if(usersRegex.indexIn(line) != -1)
         {
-            //QListWidgetItem* pitem = 0;
-            //lwg->clear();
-            //lwg->setIconSize(QSize(24, 24));
             ui->clientsWidget->clear();
             ui->clientsWidget->setIconSize(QSize(24, 24));
 
-            // If so, udpate our users list on the right:
             QStringList users = usersRegex.cap(1).split(",");
-            //userListWidget->clear();
             foreach(QString user, users)
             {
                 new QListWidgetItem(QPixmap("user.png"), user, ui->clientsWidget);
-                    //pitem = new QListWidgetItem(user, lwg);
-                    //pitem->setIcon(QPixmap(str + ".jpg"));
-
-
-            //new QListWidgetItem(QPixmap(":/user.png"), user, userListWidget);
             }
         }
-        // result after process client`s message
-        //else if(messageRegex.indexIn(line) != -1)
         else
         {
 
@@ -295,7 +314,10 @@ void MainWindow::readyReadTcp()
 
 void MainWindow::connectedUdp()
 {
-    QString str = "initString\n";
+    //QString str = "initString\n";
+    XMLCommandsParser parser(XMLCommandsParser::CT_INIT);
+    QString str = parser.toString();
+
     QByteArray data;
     QDataStream out(&data, QIODevice::WriteOnly);
     out << qint16(0);
@@ -303,9 +325,11 @@ void MainWindow::connectedUdp()
     out.device()->seek(qint16(0));
     int sz = data.size();
     out << qint16(data.size() - sizeof(qint16));
-    //udpOutSocket->writeDatagram(data, QHostAddress::LocalHost, 4300);
+    udpOutSocket->writeDatagram(data, QHostAddress(m_host), quint16(m_port));
 
-    udpOutSocket->writeDatagram("Servers, where are you?\n", QHostAddress("127.0.0.1"), quint16(m_port) );
+
+
+    //udpOutSocket->writeDatagram("Servers, where are you?\n", QHostAddress("127.0.0.1"), quint16(m_port) );
 }
 
 void MainWindow::connectedTcp()

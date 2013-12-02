@@ -9,15 +9,18 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 QT += network
+QT += xml
 
 TARGET = FirstGui
 TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    xmlcommandsparser.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    xmlcommandsparser.h
 
 FORMS    += mainwindow.ui
 FORMS    += tuneUpPanel.ui
