@@ -35,19 +35,15 @@ public:
 
 private slots:
     void onClickApplyTuneButton();
-
     void on_actionServerConnect_triggered();
-
     void on_actionClientTune_triggered();
-
     void on_actionExit_triggered();
+    void on_messageLineEdit_returnPressed();
 
     void readyReadTcp();
     void readyReadUdp();
     void connectedTcp();
     void connectedUdp();
-
-    void on_messageLineEdit_returnPressed();
 
 private:
     Ui::MainWindow *ui;
@@ -70,9 +66,11 @@ private:
     QPushButton *btn ;
     QLineEdit *edit;*/
     //QListWidget* lwg;
+
 private: // service function
     void init_server_connection();
     void appendDataToDialog(MainWindow::User user, const QString &str);
+    void showUsers(const QStringList& users);
 
 private: // constants
     static const int DEFAULT_PORT;

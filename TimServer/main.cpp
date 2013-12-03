@@ -22,7 +22,7 @@ struct CmdInfoType {
 
 bool parseCmdString(const QString& cmdString, CmdInfoType& cmdInfo)
 {
-    ProtocolType protocolType = UDP;
+    ProtocolType protocolType = TCP;
     int port = 5300;
     QString host = "@";
 

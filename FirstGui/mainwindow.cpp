@@ -7,8 +7,7 @@ const QString MainWindow::DEFAULT_HOST = QString("127.0.0.1");
 const int     MainWindow::DEFAULT_PORT = 4200;
 const QString MainWindow::SERVER_COLOR = QString("red");
 const QString MainWindow::CLIENT_COLOR = QString("blue");
-const int     MainWindow::DEFAULT_PORT_CLIENT = 7756;
-
+const int     MainWindow::DEFAULT_PORT_CLIENT = 7757;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -39,7 +38,6 @@ MainWindow::~MainWindow()
     delete tuneUpUi;
     delete tuneUpWidget;
 }
-
 
 void MainWindow::on_actionServerConnect_triggered()
 {
@@ -86,10 +84,8 @@ void MainWindow::on_actionServerConnect_triggered()
     }
 }
 
-
 void MainWindow::onClickApplyTuneButton()
 {
-    // TODO:
     bool ok = false;
     const int port = tuneUpUi->portLineEdit->text().toInt(&ok);
     m_port = ok ? port : MainWindow::DEFAULT_PORT;
@@ -102,10 +98,8 @@ void MainWindow::onClickApplyTuneButton()
     tuneUpWidget->setVisible(false);
 }
 
-
 void MainWindow::readyReadUdp()
 {
-
     QTextStream(stdout) << "Datagram reveiced.\n";
     while (socketUdp->hasPendingDatagrams()) {
         QByteArray datagram;
@@ -126,19 +120,12 @@ void MainWindow::readyReadUdp()
         qDebug() << "sender ip : " << senderHostStr;
         qDebug() << "sender port : " << senderPort;
 
-        //QString str(datagram);
         XMLCommandsParser parser(str);
 
         XMLCommandsParser::CommandsContainer commands = parser.getCommands();
         if(commands.find(XMLCommandsParser::CT_USERS) != commands.end()) {
-            ui->clientsWidget->clear();
-            ui->clientsWidget->setIconSize(QSize(24, 24));
-
             QStringList users = parser.getUsers();
-            foreach(QString user, users)
-            {
-                new QListWidgetItem(QPixmap("user.png"), user, ui->clientsWidget);
-            }
+            showUsers(users);
         }
         if(commands.find(XMLCommandsParser::CT_MESSAGE) != commands.end()) {
             const QString text = parser.getMessage();
@@ -147,8 +134,6 @@ void MainWindow::readyReadUdp()
 
             appendDataToDialog(MainWindow::SERVER, text);
         }
-
-
     }
 }
 void MainWindow::on_actionClientTune_triggered()
@@ -227,14 +212,28 @@ void MainWindow::on_messageLineEdit_returnPressed()
         udpOutSocket->writeDatagram(data, QHostAddress(m_host), quint16(m_port));
     } else { // TCP
 
-        text += "\n";
-        socketTcp->write(text.toUtf8());
+        XMLCommandsParser parser(XMLCommandsParser::CT_MESSAGE, text);
+        QString str = parser.toString();
+        str.replace("\n", "\t");
+        str += '\n';
+        socketTcp->write(str.toUtf8());
+
+        //text += "\n";
+        //socketTcp->write(text.toUtf8());
     }
 
     ui->messageLineEdit->clear();
 }
 
-
+void MainWindow::showUsers(const QStringList &users)
+{
+    ui->clientsWidget->clear();
+    ui->clientsWidget->setIconSize(QSize(24, 24));
+    foreach(QString user, users)
+    {
+        new QListWidgetItem(QPixmap("user.png"), user, ui->clientsWidget);
+    }
+}
 
 void MainWindow::readyReadTcp()
 {
@@ -243,35 +242,43 @@ void MainWindow::readyReadTcp()
     {
         // Here's the line the of text the server sent us (we use UTF-8 so
         // that non-English speakers can chat in their native language)
-        QString line = QString::fromUtf8(socketTcp->readLine()).trimmed();
+        QString str = QString::fromUtf8(socketTcp->readLine()).trimmed();
 
-        // These two regular expressions describe the kinds of messages
-        // the server can send us:
 
-        //  Normal messges look like this: "username:The message"
-        //QRegExp messageRegex("^([^:]+):(.*)$");
-
-        // Any message that starts with "/users:" is the server sending us a
-        // list of users so we can show that list in our GUI:
-        QRegExp usersRegex("^/users:(.*)$");
-
-        // users message:
-        if(usersRegex.indexIn(line) != -1)
-        {
-            ui->clientsWidget->clear();
-            ui->clientsWidget->setIconSize(QSize(24, 24));
-
-            QStringList users = usersRegex.cap(1).split(",");
-            foreach(QString user, users)
-            {
-                new QListWidgetItem(QPixmap("user.png"), user, ui->clientsWidget);
-            }
+        XMLCommandsParser parser(str);
+        XMLCommandsParser::CommandsContainer commands = parser.getCommands();
+        if(commands.find(XMLCommandsParser::CT_USERS) != commands.end()) {
+            QStringList users = parser.getUsers();
+            showUsers(users);
         }
-        else
-        {
-            appendDataToDialog(SERVER, line);
+        if(commands.find(XMLCommandsParser::CT_MESSAGE) != commands.end()) {
+            const QString text = parser.getMessage();
+            if (text.isEmpty())
+                return;
 
+            appendDataToDialog(MainWindow::SERVER, text);
         }
+
+
+//        QRegExp usersRegex("^/users:(.*)$");
+
+//        // users message:
+//        if(usersRegex.indexIn(line) != -1)
+//        {
+//            ui->clientsWidget->clear();
+//            ui->clientsWidget->setIconSize(QSize(24, 24));
+
+//            QStringList users = usersRegex.cap(1).split(",");
+//            foreach(QString user, users)
+//            {
+//                new QListWidgetItem(QPixmap("user.png"), user, ui->clientsWidget);
+//            }
+//        }
+//        else
+//        {
+//            appendDataToDialog(SERVER, line);
+
+//        }
     }
 }
 
@@ -295,6 +302,12 @@ void MainWindow::connectedUdp()
 
 void MainWindow::connectedTcp()
 {
+    XMLCommandsParser parser(XMLCommandsParser::CT_INIT);
+    QString str = parser.toString();
+    str.replace("\n", "\t");
+    str += '\n';
+    socketTcp->write(str.toUtf8());
+
     //socket->write(QString("/me:" + userLineEdit->text() + "\n").toUtf8());
-    socketTcp->write(QString("initString\n").toUtf8());
+    //socketTcp->write(QString("initString\n").toUtf8());
 }
