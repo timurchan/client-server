@@ -2,6 +2,11 @@
 #include "timudpserver.h"
 #include "xmlcommandsparser.h"
 
+uint qHash(const Address& addr) {
+    return qHash(addr.host) * qHash(addr.port);
+}
+
+
 TimUdpServer::TimUdpServer(QObject *parent) :
     QObject(parent)
 {
@@ -52,8 +57,8 @@ void TimUdpServer::readPendingDatagrams()
         XMLCommandsParser::CommandsContainer commands = parser.getCommands();
         if(commands.find(XMLCommandsParser::CT_INIT) != commands.end()) {
 
-            int port = parser.getPort(); // не тот, с которого шлет клиент, а тот, который он слушает
-            clients.push_back(Address(senderHostStr, port));
+            int port = parser.getId(); // не тот, с которого шлет клиент, а тот, который он слушает
+            clients.insert(Address(senderHostStr, port));
             sendUserList();
         }
         if(commands.find(XMLCommandsParser::CT_MESSAGE) != commands.end()) {
@@ -62,7 +67,12 @@ void TimUdpServer::readPendingDatagrams()
             // senderPort - каждый раз новый, на него нельзя ориентироваться
             // хотел ориентироваться на int port = parser.getPort() -
             // но про него пока можно узнать лишь в случае CT_INIT. Надо додумать
-            sendMessage(parser.getMessage(), Address(senderHostStr, -1));
+
+            QString in_msg = parser.getMessage();
+            int id = parser.getId();
+            QString who = senderHostStr + ":" + QString::number(id);
+            QString out_msg = who + " : " + in_msg;
+            sendMessage(out_msg, Address(senderHostStr, id));
         }
 
     }
@@ -96,7 +106,7 @@ void TimUdpServer::sendMessage(const QString &message,
                                const Address& exceptAddress)
 {
     foreach (const Address& client, clients) {
-        //if(client != exceptAddress) {
+        if(! (client == exceptAddress)) {
             QUdpSocket* udpOutSocket = new QUdpSocket(this);
 
             XMLCommandsParser parser(XMLCommandsParser::CT_MESSAGE, message);
@@ -110,6 +120,6 @@ void TimUdpServer::sendMessage(const QString &message,
             int sz = data.size();
             out << qint16(data.size() - sizeof(qint16));
             udpOutSocket->writeDatagram(data, QHostAddress(client.host), quint16(client.port));
-        //}
+        }
     }
 }

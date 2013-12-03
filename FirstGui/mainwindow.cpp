@@ -7,7 +7,7 @@ const QString MainWindow::DEFAULT_HOST = QString("127.0.0.1");
 const int     MainWindow::DEFAULT_PORT = 4200;
 const QString MainWindow::SERVER_COLOR = QString("red");
 const QString MainWindow::CLIENT_COLOR = QString("blue");
-const int     MainWindow::DEFAULT_PORT_CLIENT = 7755;
+const int     MainWindow::DEFAULT_PORT_CLIENT = 7756;
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -214,6 +214,7 @@ void MainWindow::on_messageLineEdit_returnPressed()
 
     if(m_protocol_type == UDP) {
         XMLCommandsParser parser(XMLCommandsParser::CT_MESSAGE, text);
+        parser.addCommand(XMLCommandsParser::CT_ID, DEFAULT_PORT_CLIENT);
         QString str = parser.toString();
 
         QByteArray data;
@@ -278,6 +279,8 @@ void MainWindow::connectedUdp()
 {
     //QString str = "initString\n";
     XMLCommandsParser parser(XMLCommandsParser::CT_INIT, DEFAULT_PORT_CLIENT);
+//    QString name = "Timur";
+//    parser.addCommand(XMLCommandsParser::CT_NAME, name);
     QString str = parser.toString();
 
     QByteArray data;

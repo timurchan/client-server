@@ -9,6 +9,10 @@ static QString commandType2String(const XMLCommandsParser::CommandType& command)
         return "users";
     case XMLCommandsParser::CT_MESSAGE:
         return "message";
+    case XMLCommandsParser::CT_NAME:
+        return "name";
+    case XMLCommandsParser::CT_ID:
+        return "id";
     default:
         return "unknkown_value";
     }
@@ -22,6 +26,10 @@ static XMLCommandsParser::CommandType string2CommandType(const QString& str)
         return XMLCommandsParser::CT_USERS;
     } else if(str == "message") {
         return XMLCommandsParser::CT_MESSAGE;
+    } else if(str == "name") {
+        return XMLCommandsParser::CT_NAME;
+    } else if(str == "id") {
+        return XMLCommandsParser::CT_ID;
     }
 }
 
@@ -73,18 +81,18 @@ XMLCommandsParser::XMLCommandsParser(const CommandType &command,
 }
 
 XMLCommandsParser::XMLCommandsParser(const CommandType &command,
-                                     const QString& message)
+                                     const QString& str)
 {
     QString strCommand = initCommands(command);
-    QDomElement oneCommand = makeElement("command", strCommand, message);
+    QDomElement oneCommand = makeElement("command", strCommand, str);
     commandsElement.appendChild(oneCommand);
 }
 
 XMLCommandsParser::XMLCommandsParser(const CommandType &command,
-                                     int port)
+                                     int id)
 {
     QString strCommand = initCommands(command);
-    QDomElement oneCommand = makeElement("command", strCommand, QString::number(port));
+    QDomElement oneCommand = makeElement("command", strCommand, QString::number(id));
     commandsElement.appendChild(oneCommand);
 }
 
@@ -95,6 +103,23 @@ XMLCommandsParser::XMLCommandsParser(const QString& xml)
         traverseNode(domElement);
     }
 }
+
+void XMLCommandsParser::addCommand(const CommandType &command,
+                                   const QString &str)
+{
+    QString strCommand = commandType2String(command);
+    QDomElement oneCommand = makeElement("command", strCommand, str);
+    commandsElement.appendChild(oneCommand);
+}
+
+void XMLCommandsParser::addCommand(const CommandType &command,
+                                   int val)
+{
+    QString strCommand = commandType2String(command);
+    QDomElement oneCommand = makeElement("command", strCommand, QString::number(val));
+    commandsElement.appendChild(oneCommand);
+}
+
 
 void XMLCommandsParser::traverseNode(const QDomNode& node)
 {
@@ -110,8 +135,11 @@ void XMLCommandsParser::traverseNode(const QDomNode& node)
                   if(attrName == "message") {
                       message = domElement.text();
                   }
-                  if(attrName == "init") {
-                      port = domElement.text().toInt();
+                  if(attrName == "name") {
+                      name = domElement.text();
+                  }
+                  if(attrName == "init" || attrName == "id") {
+                      id = domElement.text().toInt();
                   }
               } else if(domElement.tagName() == "user"){
                   users << domElement.text();

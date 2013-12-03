@@ -3,7 +3,24 @@
 
 #include <QObject>
 #include <QUdpSocket>
-#include <QVector>
+#include <QSet>
+
+struct Address {
+    Address() {}
+    Address(const QString& host_, int port_) :
+        host(host_),
+        port(port_)
+    {}
+
+    bool operator ==(const Address& other) const {
+        return host == other.host && port == other.port;
+    }
+
+    QString host;
+    int port;
+};
+
+
 
 class TimUdpServer : public QObject
 {
@@ -12,18 +29,6 @@ public:
     explicit TimUdpServer(QObject *parent = 0);
 
     bool initSocket();
-
-private:
-    struct Address {
-        Address() {}
-        Address(const QString& host_, int port_) :
-            host(host_),
-            port(port_)
-        {}
-
-        QString host;
-        int port;
-    };
 
 private:
 
@@ -35,7 +40,7 @@ private slots:
     void readPendingDatagrams();
 
 private:
-    QVector<Address> clients;
+    QSet<Address> clients;
     QUdpSocket *udpSocket;
 };
 

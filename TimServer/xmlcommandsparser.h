@@ -11,25 +11,35 @@ public:
     enum CommandType {
         CT_INIT,
         CT_USERS,
-        CT_MESSAGE
+        CT_MESSAGE,
+        CT_NAME,
+        CT_ID
     };
 
     typedef QSet<CommandType> CommandsContainer;
 
+    //-----------------------------------------------------------
     XMLCommandsParser(const CommandType& command);
     XMLCommandsParser(const CommandType& command,
-                      int port);
+                      int id);
     XMLCommandsParser(const CommandType& command,
                       const QStringList& users);
     XMLCommandsParser(const CommandType& command,
-                      const QString& message);
+                      const QString& str);
 
     XMLCommandsParser(const QString& xml);
+    //-----------------------------------------------------------
+
+    void addCommand(const CommandType& command,
+                    const QString& str);
+    void addCommand(const CommandType& command,
+                    int val);
 
     QString toString() const;
     QDomDocument toDocument() const;
 
-    int getPort() const { return port; }
+    //-----------------------------------------------------------
+    int getId() const { return id; }
     QString getMessage() const { return message; }
     QStringList getUsers() const { return users; }
     CommandsContainer getCommands() const { return commands; }
@@ -47,7 +57,9 @@ private:
     CommandsContainer commands;
     QStringList users;
     QString message;
-    int port;
+    int id;
+    QString name;
+
 };
 
 #endif // XMLCOMMANDSPARSER_H

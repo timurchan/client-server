@@ -20,7 +20,9 @@ http://www.youtube.com/watch?v=NXGE5XUrRSI && http://voidrealms.com/
 
 
 <commands>
- <command type="init"></command>
+ <command type="init">12345</command>
+ <command type="name">timur</command>
+ <command type="id">12345</command>
  <command type="users">
   <user>192.9.200.72:12345</user>
   <user>127.0.0.1:54321</user>
