@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include <QUdpSocket>
+#include <QTextStream>
+#include <QString>
+#include <QFile>
 #include <QSet>
 
 struct Address {
@@ -25,7 +28,8 @@ class TimUdpServer : public QObject
 {
     Q_OBJECT
 public:
-    explicit TimUdpServer(const QString& senderHost = "", QObject *parent = 0);
+    explicit TimUdpServer(QFile& file, const QString& senderHost = "",
+                          QObject *parent = 0);
 
     bool initSocket(int port);
 
@@ -34,6 +38,9 @@ private:
     void sendUserList();
     void sendMessage(const QString& message,
                      const Address& exceptAddress);
+    void sendUdp(const Address& addr,
+                 const QString &str);
+    void log(const QString str);
 
 private slots:
     void readPendingDatagrams();
@@ -41,7 +48,10 @@ private slots:
 private:
     QSet<Address> clients;
     QUdpSocket *udpSocket;
+    QUdpSocket *udpOutSocket;
     QString allowedSenderHost;
+
+    QTextStream stream;
 };
 
 #endif // TIMUDPSERVER_H

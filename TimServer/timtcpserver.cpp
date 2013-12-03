@@ -10,13 +10,20 @@ static QString prepareDataToSend(QString str) {
     return str;
 }
 
-TimTcpServer::TimTcpServer(QObject *parent) : QTcpServer(parent)
+TimTcpServer::TimTcpServer(QFile& file, QObject *parent) : QTcpServer(parent)
 {
+    stream.setDevice(&file);
 }
 
 TimTcpServer::~TimTcpServer()
 {
-    bool q = 1;
+}
+
+void TimTcpServer::log(const QString str)
+{
+    QTextStream(stdout) << str << "\n";
+    stream << str << "\n";
+    stream.flush();
 }
 
 void TimTcpServer::incomingConnection(int socketfd)
@@ -27,7 +34,7 @@ void TimTcpServer::incomingConnection(int socketfd)
             QString::number(client->peerPort());
     clients[client] = user;
 
-    qDebug() << "New client from:" << client->peerAddress().toString();
+    log("New client from:" + client->peerAddress().toString());
 
     connect(client, SIGNAL(readyRead()), this, SLOT(readyRead()));
     connect(client, SIGNAL(disconnected()), this, SLOT(disconnected()));
@@ -56,6 +63,7 @@ void TimTcpServer::readyRead()
         }
         if(commands.find(XMLCommandsParser::CT_MESSAGE) != commands.end()) {
             QString msg = clients[client] + " : " + parser.getMessage();
+            log(msg);
             XMLCommandsParser parser1(XMLCommandsParser::CT_MESSAGE, msg);
             QString str = prepareDataToSend(parser1.toString());
 
@@ -73,7 +81,7 @@ void TimTcpServer::readyRead()
 void TimTcpServer::disconnected()
 {
     QTcpSocket *client = (QTcpSocket*)sender();
-    qDebug() << "Client disconnected:" << client->peerAddress().toString();
+    log("Client disconnected:" + client->peerAddress().toString());
     clients.remove(client);
     sendUserList();
 }

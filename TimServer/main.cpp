@@ -2,6 +2,8 @@
 #include <QTextStream>
 #include <QSharedPointer>
 #include <QStringList>
+#include <QFile>
+#include <QTextStream>
 #include <getopt.h>
 
 #include "timtcpserver.h"
@@ -165,6 +167,7 @@ ErrorType parseInputArgs(int argc, char *argv[], CmdInfoType& cmdInfo)
                 if(!cmd) {
                     return CMD_ERROR;
                 }
+                break;
             case 'l':
                 cmdInfo.logName = QString(optarg);
                 break;
@@ -172,6 +175,43 @@ ErrorType parseInputArgs(int argc, char *argv[], CmdInfoType& cmdInfo)
     }
 
     return cmd ? NO_ERROR : COMMON_ERROR;
+}
+
+bool startServer(const CmdInfoType& cmdInfo)
+{
+    QString logName(cmdInfo.logName);
+    if(logName.isEmpty()) {
+        logName = "TimServer.log";  // default value;
+    }
+    static QFile logFile(logName);
+    if ( !logFile.open(QIODevice::ReadWrite) ) {
+        QTextStream(stdout) << "Can`t open log file\n";
+        return false;
+    }
+
+    bool success = false;
+    if(cmdInfo.protocolType == UDP) {
+        //QSharedPointer<TimUdpServer> server = QSharedPointer<TimUdpServer>(new TimUdpServer());
+        QString allowedSenderHost = cmdInfo.host == "@" ? "" : cmdInfo.host;
+        TimUdpServer* server = new TimUdpServer(logFile, allowedSenderHost);
+        success = server->initSocket(cmdInfo.port);
+
+    } else if(cmdInfo.protocolType == TCP) {
+        //QSharedPointer<TimTcpServer> server = QSharedPointer<TimTcpServer>(new TimTcpServer());
+        TimTcpServer* server = new TimTcpServer(logFile);
+        if(cmdInfo.host == "@") {
+            success = server->listen(QHostAddress::Any, cmdInfo.port);
+        } else {
+            QHostAddress host(cmdInfo.host);
+            success = server->listen(host, cmdInfo.port);
+        }
+        QTextStream(stdout) << "tcp server started : port = " << cmdInfo.port << "\n";
+    } else {
+        QTextStream(stdout) << "Unknown protocol. Exiting...\n";
+        return false;
+    }
+
+    return success;
 }
 
 int main(int argc, char *argv[])
@@ -198,35 +238,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    bool success = false;
-
-    if(cmdInfo.protocolType == UDP) {
-        //QSharedPointer<TimUdpServer> server = QSharedPointer<TimUdpServer>(new TimUdpServer());
-        QString allowedSenderHost = cmdInfo.host == "@" ? "" : cmdInfo.host;
-        TimUdpServer* server = new TimUdpServer(allowedSenderHost);
-        success = server->initSocket(cmdInfo.port);
-
-    } else if(cmdInfo.protocolType == TCP) {
-        //QSharedPointer<TimTcpServer> server = QSharedPointer<TimTcpServer>(new TimTcpServer());
-        TimTcpServer* server = new TimTcpServer();
-        if(cmdInfo.host == "@") {
-            success = server->listen(QHostAddress::Any, cmdInfo.port);
-        } else {
-            QHostAddress host(cmdInfo.host);
-            success = server->listen(host, cmdInfo.port);
-        }
-        qDebug() << "tcp server started : port = " << cmdInfo.port;
-    } else {
-        QTextStream(stdout) << "Unknown protocol. Exiting...\n";
-        return 3;
-    }
-
-    if(!success)
+    if(!startServer(cmdInfo))
     {
         QTextStream(stdout) << "Could not listen on port " << cmdInfo.port << ". Exiting...\n";
         return 2;
     }
-    QTextStream(stdout) << "Ready.\n";
+    QTextStream(stdout) << "Ready...\n";
 
     int res = a.exec();
     return res;

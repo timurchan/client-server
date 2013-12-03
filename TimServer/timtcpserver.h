@@ -2,13 +2,15 @@
 #define TIMSERVER_H
 
 #include <QTcpServer>
+#include <QTextStream>
+#include <QFile>
 
 class TimTcpServer : public QTcpServer
 {
     Q_OBJECT
 
 public:
-    TimTcpServer(QObject *parent=0);
+    TimTcpServer(QFile& file, QObject *parent=0);
     ~TimTcpServer();
 
 private slots:
@@ -20,10 +22,13 @@ protected:
 
 private:
     void sendUserList();
+    void log(const QString str);
 
 private:
     typedef QMap<QTcpSocket*, QString> ClientInfoContainer;
     QMap<QTcpSocket*, QString> clients;
+
+    QTextStream stream;
 };
 
 #endif // TIMSERVER_H

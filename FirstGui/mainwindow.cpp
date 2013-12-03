@@ -264,7 +264,6 @@ void MainWindow::sendUdp(const QString &str_)
     out << qint16(0);
     out << str;
     out.device()->seek(qint16(0));
-    int sz = data.size();
     out << qint16(data.size() - sizeof(qint16));
     udpOutSocket->writeDatagram(data, QHostAddress(m_host), quint16(m_port));
 }

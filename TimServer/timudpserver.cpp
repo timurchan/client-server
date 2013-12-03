@@ -7,10 +7,18 @@ uint qHash(const Address& addr) {
 }
 
 
-TimUdpServer::TimUdpServer(const QString& senderHost, QObject *parent) :
+TimUdpServer::TimUdpServer(QFile& file, const QString& senderHost, QObject *parent) :
     QObject(parent),
     allowedSenderHost(senderHost)
 {
+    stream.setDevice(&file);
+}
+
+void TimUdpServer::log(const QString str)
+{
+    QTextStream(stdout) << str << "\n";
+    stream << str << "\n\n";
+    stream.flush();
 }
 
 bool TimUdpServer::initSocket(int port)
@@ -20,8 +28,9 @@ bool TimUdpServer::initSocket(int port)
     if(isBind)
     {
         connect(udpSocket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
-        qDebug() << "udp server started : " << udpSocket->localAddress()
-                 << ", port : " << udpSocket->localPort();
+        log("udp server started : " + QString::number(udpSocket->localPort()));
+
+        udpOutSocket = new QUdpSocket(this);
     }
     return isBind;
 }
@@ -45,9 +54,6 @@ void TimUdpServer::readPendingDatagrams()
             in >> sz;
             in >> str;
 
-            qDebug() << "sender ip : " << senderHostStr;
-            qDebug() << "sender port : " << senderPort;
-
             XMLCommandsParser parser(str);
             XMLCommandsParser::CommandsContainer commands = parser.getCommands();
             if(commands.find(XMLCommandsParser::CT_INIT) != commands.end()) {
@@ -59,11 +65,24 @@ void TimUdpServer::readPendingDatagrams()
                 QString in_msg = parser.getMessage();
                 int id = parser.getId();
                 QString who = senderHostStr + ":" + QString::number(id);
+
                 QString out_msg = who + " : " + in_msg;
+                log(out_msg);
                 sendMessage(out_msg, Address(senderHostStr, id));
             }
         }
     }
+}
+
+void TimUdpServer::sendUdp(const Address& addr, const QString &str)
+{
+    QByteArray data;
+    QDataStream out(&data, QIODevice::WriteOnly);
+    out << qint16(0);
+    out << str;
+    out.device()->seek(qint16(0));
+    out << qint16(data.size() - sizeof(qint16));
+    udpOutSocket->writeDatagram(data, QHostAddress(addr.host), quint16(addr.port));
 }
 
 void TimUdpServer::sendUserList()
@@ -74,19 +93,9 @@ void TimUdpServer::sendUserList()
     }
 
     foreach (const Address& client, clients) {
-        QUdpSocket* udpOutSocket = new QUdpSocket(this);
-
         XMLCommandsParser parser(XMLCommandsParser::CT_USERS, clientNames);
         QString str = parser.toString();
-
-        QByteArray data;
-        QDataStream out(&data, QIODevice::WriteOnly);
-        out << qint16(0);
-        out << str;
-        out.device()->seek(qint16(0));
-        int sz = data.size();
-        out << qint16(data.size() - sizeof(qint16));
-        udpOutSocket->writeDatagram(data, QHostAddress(client.host), quint16(client.port));
+        sendUdp(client, str);
     }
 }
 
@@ -95,19 +104,9 @@ void TimUdpServer::sendMessage(const QString &message,
 {
     foreach (const Address& client, clients) {
         if(! (client == exceptAddress)) {
-            QUdpSocket* udpOutSocket = new QUdpSocket(this);
-
             XMLCommandsParser parser(XMLCommandsParser::CT_MESSAGE, message);
             QString str = parser.toString();
-
-            QByteArray data;
-            QDataStream out(&data, QIODevice::WriteOnly);
-            out << qint16(0);
-            out << str;
-            out.device()->seek(qint16(0));
-            int sz = data.size();
-            out << qint16(data.size() - sizeof(qint16));
-            udpOutSocket->writeDatagram(data, QHostAddress(client.host), quint16(client.port));
+            sendUdp(client, str);
         }
     }
 }
