@@ -1,8 +1,11 @@
 <RCC>
-  <qresource prefix="/new/prefix1">
-    <file>icons/server_edit.png</file>
-    <file>icons/server.png</file>
-    <file>icons/setting_tools.png</file>
-    <file>icons/door_in.png</file>
-  </qresource>
+    <qresource prefix="/new/prefix1">
+        <file>icons/server_edit.png</file>
+        <file>icons/server.png</file>
+        <file>icons/setting_tools.png</file>
+        <file>icons/door_in.png</file>
+        <file>icons/connect_small.png</file>
+        <file>icons/disconnect_small.png</file>
+        <file>icons/door_in_small.png</file>
+    </qresource>
 </RCC>

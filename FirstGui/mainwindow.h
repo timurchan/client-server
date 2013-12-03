@@ -34,9 +34,8 @@ public:
     ~MainWindow();
 
 private slots:
-    void onClickApplyTuneButton();
+    void getNewSettings();
     void on_actionServerConnect_triggered();
-    void on_actionClientTune_triggered();
     void on_actionExit_triggered();
     void on_messageLineEdit_returnPressed();
 
@@ -45,15 +44,17 @@ private slots:
     void connectedTcp();
     void connectedUdp();
 
+    void on_clCB_currentIndexChanged(int index);
+
+    void on_actionDisconnect_triggered();
+
 private:
     Ui::MainWindow *ui;
-    Ui::TuneUpForm *tuneUpUi;
-    QWidget *tuneUpWidget;
 
     QString m_host;
     Protocol m_protocol_type;
-    int m_port;
-    int m_defaultPort;
+    int m_portHost;
+    int m_clientPort;
     bool m_isBindUdpInSocket;
 
     QTcpSocket *socketTcp;
@@ -73,6 +74,9 @@ private: // service function
     void showUsers(const QStringList& users);
     void sendUdp(const QString& str);
     void sendTcp(const QString& str);
+
+    void enableChatWidgets(bool show);
+    void enableTuneUpWidgets(bool show);
 
 private: // constants
     static const int DEFAULT_PORT;
