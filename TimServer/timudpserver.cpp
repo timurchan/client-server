@@ -7,15 +7,16 @@ uint qHash(const Address& addr) {
 }
 
 
-TimUdpServer::TimUdpServer(QObject *parent) :
-    QObject(parent)
+TimUdpServer::TimUdpServer(const QString& senderHost, QObject *parent) :
+    QObject(parent),
+    allowedSenderHost(senderHost)
 {
 }
 
-bool TimUdpServer::initSocket()
+bool TimUdpServer::initSocket(int port)
 {
     udpSocket = new QUdpSocket(this);
-    bool isBind = udpSocket->bind(QHostAddress::LocalHost, 4200);
+    bool isBind = udpSocket->bind(QHostAddress::LocalHost, port);
     if(isBind)
     {
         connect(udpSocket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
@@ -25,56 +26,43 @@ bool TimUdpServer::initSocket()
     return isBind;
 }
 
-
 void TimUdpServer::readPendingDatagrams()
 {
-
     QTextStream(stdout) << "Datagram reveiced.\n";
     while (udpSocket->hasPendingDatagrams()) {
         QByteArray datagram;
         datagram.resize(udpSocket->pendingDatagramSize());
-        QHostAddress senderHost;
-        quint16 senderPort;
-
         QDataStream in(&datagram, QIODevice::ReadOnly);
 
+        QHostAddress senderHost;
+        quint16 senderPort;
         udpSocket->readDatagram(datagram.data(), datagram.size(), &senderHost, &senderPort);
 
-        qint16 sz = 0;
-        QString str;
-        in >> sz;
-        in >> str;
-
         QString senderHostStr = senderHost.toString();
-        qDebug() << "sender ip : " << senderHostStr;
-        qDebug() << "sender port : " << senderPort;
+        if(allowedSenderHost == "" || allowedSenderHost == senderHostStr) {
+            qint16 sz = 0;
+            QString str;
+            in >> sz;
+            in >> str;
 
-        //QString str(datagram);
-        XMLCommandsParser parser(str);
+            qDebug() << "sender ip : " << senderHostStr;
+            qDebug() << "sender port : " << senderPort;
 
-
-
-        XMLCommandsParser::CommandsContainer commands = parser.getCommands();
-        if(commands.find(XMLCommandsParser::CT_INIT) != commands.end()) {
-
-            int port = parser.getId(); // не тот, с которого шлет клиент, а тот, который он слушает
-            clients.insert(Address(senderHostStr, port));
-            sendUserList();
+            XMLCommandsParser parser(str);
+            XMLCommandsParser::CommandsContainer commands = parser.getCommands();
+            if(commands.find(XMLCommandsParser::CT_INIT) != commands.end()) {
+                int port = parser.getId(); // не тот, с которого шлет клиент, а тот, который он слушает
+                clients.insert(Address(senderHostStr, port));
+                sendUserList();
+            }
+            if(commands.find(XMLCommandsParser::CT_MESSAGE) != commands.end()) {
+                QString in_msg = parser.getMessage();
+                int id = parser.getId();
+                QString who = senderHostStr + ":" + QString::number(id);
+                QString out_msg = who + " : " + in_msg;
+                sendMessage(out_msg, Address(senderHostStr, id));
+            }
         }
-        if(commands.find(XMLCommandsParser::CT_MESSAGE) != commands.end()) {
-
-            // это пока никак не реализовать, потому что неизвестно, от кого сообщение
-            // senderPort - каждый раз новый, на него нельзя ориентироваться
-            // хотел ориентироваться на int port = parser.getPort() -
-            // но про него пока можно узнать лишь в случае CT_INIT. Надо додумать
-
-            QString in_msg = parser.getMessage();
-            int id = parser.getId();
-            QString who = senderHostStr + ":" + QString::number(id);
-            QString out_msg = who + " : " + in_msg;
-            sendMessage(out_msg, Address(senderHostStr, id));
-        }
-
     }
 }
 

@@ -21,14 +21,13 @@ struct Address {
 };
 
 
-
 class TimUdpServer : public QObject
 {
     Q_OBJECT
 public:
-    explicit TimUdpServer(QObject *parent = 0);
+    explicit TimUdpServer(const QString& senderHost = "", QObject *parent = 0);
 
-    bool initSocket();
+    bool initSocket(int port);
 
 private:
 
@@ -42,6 +41,7 @@ private slots:
 private:
     QSet<Address> clients;
     QUdpSocket *udpSocket;
+    QString allowedSenderHost;
 };
 
 #endif // TIMUDPSERVER_H

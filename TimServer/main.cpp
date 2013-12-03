@@ -22,9 +22,9 @@ struct CmdInfoType {
 
 bool parseCmdString(const QString& cmdString, CmdInfoType& cmdInfo)
 {
-    ProtocolType protocolType = TCP;
+    ProtocolType protocolType = UDP;
     int port = 5300;
-    QString host = "@";
+    QString host = "127.0.0.1";
 
     cmdInfo.host = host;
     cmdInfo.port = port;
@@ -101,13 +101,20 @@ int main(int argc, char *argv[])
 
     if(cmdInfo.protocolType == UDP) {
         //QSharedPointer<TimUdpServer> server = QSharedPointer<TimUdpServer>(new TimUdpServer());
-        TimUdpServer* server = new TimUdpServer();
-        success = server->initSocket();
+        QString allowedSenderHost = cmdInfo.host == "@" ? "" : cmdInfo.host;
+        TimUdpServer* server = new TimUdpServer(allowedSenderHost);
+        success = server->initSocket(cmdInfo.port);
 
     } else if(cmdInfo.protocolType == TCP) {
         //QSharedPointer<TimTcpServer> server = QSharedPointer<TimTcpServer>(new TimTcpServer());
         TimTcpServer* server = new TimTcpServer();
-        success = server->listen(QHostAddress::Any, cmdInfo.port);
+        if(cmdInfo.host == "@") {
+            success = server->listen(QHostAddress::Any, cmdInfo.port);
+        } else {
+            QHostAddress host(cmdInfo.host);
+            success = server->listen(host, cmdInfo.port);
+        }
+        qDebug() << "tcp server started : port = " << cmdInfo.port;
     } else {
         QTextStream(stdout) << "Unknown protocol. Exiting...\n";
         return 3;

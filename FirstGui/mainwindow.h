@@ -71,6 +71,8 @@ private: // service function
     void init_server_connection();
     void appendDataToDialog(MainWindow::User user, const QString &str);
     void showUsers(const QStringList& users);
+    void sendUdp(const QString& str);
+    void sendTcp(const QString& str);
 
 private: // constants
     static const int DEFAULT_PORT;

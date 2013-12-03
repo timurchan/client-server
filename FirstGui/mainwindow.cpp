@@ -4,7 +4,7 @@
 #include "xmlcommandsparser.h"
 
 const QString MainWindow::DEFAULT_HOST = QString("127.0.0.1");
-const int     MainWindow::DEFAULT_PORT = 4200;
+const int     MainWindow::DEFAULT_PORT = 5300;
 const QString MainWindow::SERVER_COLOR = QString("red");
 const QString MainWindow::CLIENT_COLOR = QString("blue");
 const int     MainWindow::DEFAULT_PORT_CLIENT = 7757;
@@ -98,6 +98,107 @@ void MainWindow::onClickApplyTuneButton()
     tuneUpWidget->setVisible(false);
 }
 
+void MainWindow::on_actionClientTune_triggered()
+{
+    ui->statusBar->showMessage(QString("Tune up client connection"));
+    if (tuneUpWidget == NULL)
+    {
+        tuneUpWidget = new QWidget();
+        tuneUpUi->setupUi(tuneUpWidget);
+        init_server_connection();
+    }
+    tuneUpWidget->setVisible(true);
+}
+
+void MainWindow::on_actionExit_triggered()
+{
+    ui->statusBar->showMessage(QString("Close connection"));
+    this->close();
+}
+
+void MainWindow::init_server_connection()
+{
+    tuneUpUi->hostLineEdit->setText(m_host);
+    tuneUpUi->portLineEdit->setText(QString::number(m_port));
+    tuneUpUi->protocolComboBox->setCurrentIndex(m_protocol_type);
+}
+
+void MainWindow::appendDataToDialog(MainWindow::User user_type, const QString &str)
+{
+    QString user_name = QString("unknown: ");
+    const QColor default_color = ui->dialogW->textColor();
+    QColor user_color = default_color;
+    switch (user_type)
+    {
+    case MainWindow::SERVER:
+        user_name = QString("server: ");
+        user_color = QColor(MainWindow::SERVER_COLOR);
+        break;
+    case MainWindow::CLIENT:
+        user_name = QString("me: ");
+        user_color = QColor(MainWindow::CLIENT_COLOR);
+        break;
+    }
+    ui->dialogW->setTextColor(user_color);
+    ui->dialogW->insertPlainText(user_name); //textCursor().insertText(text);
+    //ui->dialogW->append(user_name);
+    ui->dialogW->setTextColor(default_color);
+    ui->dialogW->insertPlainText(str + QString("\n"));
+    //ui->dialogW->append(str);
+    //ui->dialogW->append(QString());
+}
+
+void MainWindow::on_messageLineEdit_returnPressed()
+{
+    QString text = ui->messageLineEdit->text();
+    if (text.isEmpty())
+        return;
+
+    appendDataToDialog(MainWindow::CLIENT, text);
+
+    if(m_protocol_type == UDP) {
+        XMLCommandsParser parser(XMLCommandsParser::CT_MESSAGE, text);
+        parser.addCommand(XMLCommandsParser::CT_ID, DEFAULT_PORT_CLIENT);
+        sendUdp(parser.toString());
+    } else { // TCP
+        XMLCommandsParser parser(XMLCommandsParser::CT_MESSAGE, text);
+        sendTcp(parser.toString());
+    }
+
+    ui->messageLineEdit->clear();
+}
+
+void MainWindow::showUsers(const QStringList &users)
+{
+    ui->clientsWidget->clear();
+    ui->clientsWidget->setIconSize(QSize(24, 24));
+    foreach(QString user, users)
+    {
+        new QListWidgetItem(QPixmap("user.png"), user, ui->clientsWidget);
+    }
+}
+
+void MainWindow::readyReadTcp()
+{
+    while(socketTcp->canReadLine())
+    {
+        QString str = QString::fromUtf8(socketTcp->readLine()).trimmed();
+
+        XMLCommandsParser parser(str);
+        XMLCommandsParser::CommandsContainer commands = parser.getCommands();
+        if(commands.find(XMLCommandsParser::CT_USERS) != commands.end()) {
+            QStringList users = parser.getUsers();
+            showUsers(users);
+        }
+        if(commands.find(XMLCommandsParser::CT_MESSAGE) != commands.end()) {
+            const QString text = parser.getMessage();
+            if (text.isEmpty())
+                return;
+            appendDataToDialog(MainWindow::SERVER, text);
+        }
+    }
+}
+
 void MainWindow::readyReadUdp()
 {
     QTextStream(stdout) << "Datagram reveiced.\n";
@@ -136,160 +237,30 @@ void MainWindow::readyReadUdp()
         }
     }
 }
-void MainWindow::on_actionClientTune_triggered()
-{
-    ui->statusBar->showMessage(QString("Tune up client connection"));
-    if (tuneUpWidget == NULL)
-    {
-        tuneUpWidget = new QWidget();
-        tuneUpUi->setupUi(tuneUpWidget);
-        init_server_connection();
-    }
-    tuneUpWidget->setVisible(true);
-}
-
-void MainWindow::on_actionExit_triggered()
-{
-    ui->statusBar->showMessage(QString("Close connection"));
-    this->close();
-}
-
-
-
-void MainWindow::init_server_connection()
-{
-    tuneUpUi->hostLineEdit->setText(m_host);
-    tuneUpUi->portLineEdit->setText(QString::number(m_port));
-    tuneUpUi->protocolComboBox->setCurrentIndex(m_protocol_type);
-}
-
-void MainWindow::appendDataToDialog(MainWindow::User user_type, const QString &str)
-{
-    QString user_name = QString("unknown: ");
-    const QColor default_color = ui->dialogW->textColor();
-    QColor user_color = default_color;
-    switch (user_type)
-    {
-    case MainWindow::SERVER:
-        user_name = QString("server: ");
-        user_color = QColor(MainWindow::SERVER_COLOR);
-        break;
-    case MainWindow::CLIENT:
-        user_name = QString("me: ");
-        user_color = QColor(MainWindow::CLIENT_COLOR);
-        break;
-    }
-    ui->dialogW->setTextColor(user_color);
-    ui->dialogW->insertPlainText(user_name); //textCursor().insertText(text);
-    //ui->dialogW->append(user_name);
-    ui->dialogW->setTextColor(default_color);
-    ui->dialogW->insertPlainText(str + QString("\n"));
-    //ui->dialogW->append(str);
-    //ui->dialogW->append(QString());
-}
-
-
-void MainWindow::on_messageLineEdit_returnPressed()
-{
-    QString text = ui->messageLineEdit->text();
-    if (text.isEmpty())
-        return;
-
-    appendDataToDialog(MainWindow::CLIENT, text);
-
-    if(m_protocol_type == UDP) {
-        XMLCommandsParser parser(XMLCommandsParser::CT_MESSAGE, text);
-        parser.addCommand(XMLCommandsParser::CT_ID, DEFAULT_PORT_CLIENT);
-        QString str = parser.toString();
-
-        QByteArray data;
-        QDataStream out(&data, QIODevice::WriteOnly);
-        out << qint16(0);
-        out << str;
-        out.device()->seek(qint16(0));
-        int sz = data.size();
-        out << qint16(data.size() - sizeof(qint16));
-        udpOutSocket->writeDatagram(data, QHostAddress(m_host), quint16(m_port));
-    } else { // TCP
-
-        XMLCommandsParser parser(XMLCommandsParser::CT_MESSAGE, text);
-        QString str = parser.toString();
-        str.replace("\n", "\t");
-        str += '\n';
-        socketTcp->write(str.toUtf8());
-
-        //text += "\n";
-        //socketTcp->write(text.toUtf8());
-    }
-
-    ui->messageLineEdit->clear();
-}
-
-void MainWindow::showUsers(const QStringList &users)
-{
-    ui->clientsWidget->clear();
-    ui->clientsWidget->setIconSize(QSize(24, 24));
-    foreach(QString user, users)
-    {
-        new QListWidgetItem(QPixmap("user.png"), user, ui->clientsWidget);
-    }
-}
-
-void MainWindow::readyReadTcp()
-{
-    // We'll loop over every (complete) line of text that the server has sent us:
-    while(socketTcp->canReadLine())
-    {
-        // Here's the line the of text the server sent us (we use UTF-8 so
-        // that non-English speakers can chat in their native language)
-        QString str = QString::fromUtf8(socketTcp->readLine()).trimmed();
-
-
-        XMLCommandsParser parser(str);
-        XMLCommandsParser::CommandsContainer commands = parser.getCommands();
-        if(commands.find(XMLCommandsParser::CT_USERS) != commands.end()) {
-            QStringList users = parser.getUsers();
-            showUsers(users);
-        }
-        if(commands.find(XMLCommandsParser::CT_MESSAGE) != commands.end()) {
-            const QString text = parser.getMessage();
-            if (text.isEmpty())
-                return;
-
-            appendDataToDialog(MainWindow::SERVER, text);
-        }
-
-
-//        QRegExp usersRegex("^/users:(.*)$");
-
-//        // users message:
-//        if(usersRegex.indexIn(line) != -1)
-//        {
-//            ui->clientsWidget->clear();
-//            ui->clientsWidget->setIconSize(QSize(24, 24));
-
-//            QStringList users = usersRegex.cap(1).split(",");
-//            foreach(QString user, users)
-//            {
-//                new QListWidgetItem(QPixmap("user.png"), user, ui->clientsWidget);
-//            }
-//        }
-//        else
-//        {
-//            appendDataToDialog(SERVER, line);
-
-//        }
-    }
-}
 
 void MainWindow::connectedUdp()
 {
-    //QString str = "initString\n";
     XMLCommandsParser parser(XMLCommandsParser::CT_INIT, DEFAULT_PORT_CLIENT);
-//    QString name = "Timur";
-//    parser.addCommand(XMLCommandsParser::CT_NAME, name);
-    QString str = parser.toString();
+    sendUdp(parser.toString());
+}
 
+void MainWindow::connectedTcp()
+{
+    XMLCommandsParser parser(XMLCommandsParser::CT_INIT);
+    sendTcp(parser.toString());
+}
+
+void MainWindow::sendTcp(const QString &str_)
+{
+    QString str(str_);
+    str.replace("\n", "\t");
+    str += '\n';
+    socketTcp->write(str.toUtf8());
+}
+
+void MainWindow::sendUdp(const QString &str_)
+{
+    QString str(str_);
     QByteArray data;
     QDataStream out(&data, QIODevice::WriteOnly);
     out << qint16(0);
@@ -298,16 +269,4 @@ void MainWindow::connectedUdp()
     int sz = data.size();
     out << qint16(data.size() - sizeof(qint16));
     udpOutSocket->writeDatagram(data, QHostAddress(m_host), quint16(m_port));
-}
-
-void MainWindow::connectedTcp()
-{
-    XMLCommandsParser parser(XMLCommandsParser::CT_INIT);
-    QString str = parser.toString();
-    str.replace("\n", "\t");
-    str += '\n';
-    socketTcp->write(str.toUtf8());
-
-    //socket->write(QString("/me:" + userLineEdit->text() + "\n").toUtf8());
-    //socketTcp->write(QString("initString\n").toUtf8());
 }
