@@ -1,6 +1,7 @@
 #include <QCoreApplication>
 #include <QTextStream>
 #include <QSharedPointer>
+#include <QStringList>
 #include <getopt.h>
 
 #include "timtcpserver.h"
@@ -10,7 +11,8 @@ const char * VERSION = "0.022";
 
 enum ProtocolType {
    UDP,
-   TCP
+   TCP,
+   UNKNOWN
 };
 
 struct CmdInfoType {
@@ -20,15 +22,49 @@ struct CmdInfoType {
     QString logName;
 };
 
+ProtocolType getProtocolType(const QString& str)
+{
+    const QString typeS = str.toUpper();
+    if (typeS == QString("UDP"))
+        return UDP;
+    else if (typeS == QString("TCP"))
+        return TCP;
+    else
+        return UNKNOWN;
+}
+
 bool parseCmdString(const QString& cmdString, CmdInfoType& cmdInfo)
 {
-    ProtocolType protocolType = UDP;
-    int port = 5300;
-    QString host = "127.0.0.1";
+    // cmdString example: udp://192.168.9.122:4200
+    //           example: udp://@:4200
+    const QStringList dataList = cmdString.split(":");
 
-    cmdInfo.host = host;
+    if (dataList.size() != 3)
+        return false;
+
+    ProtocolType protocol = getProtocolType(dataList[0]); // protocol type
+    if (protocol == UNKNOWN)
+        return false;
+
+    QString hostSoFar = dataList[1];
+    const QString slashes = hostSoFar.left(2);
+    if (slashes != QString("//"))
+        return false;
+    else
+        hostSoFar.remove(0, 2);
+
+    QString portSoFar = dataList[2];
+    if (portSoFar.isEmpty())
+        return false;
+
+    bool ok = false;
+    int port = portSoFar.toInt(&ok);
+    if (!ok || port < 0)
+        return false;
+
+    cmdInfo.host = hostSoFar;
     cmdInfo.port = port;
-    cmdInfo.protocolType = protocolType;
+    cmdInfo.protocolType = protocol;
 
     return true;
 }
@@ -101,7 +137,7 @@ int main(int argc, char *argv[])
 
     if(cmdInfo.protocolType == UDP) {
         //QSharedPointer<TimUdpServer> server = QSharedPointer<TimUdpServer>(new TimUdpServer());
-        QString allowedSenderHost = cmdInfo.host == "@" ? "" : cmdInfo.host;
+        QString allowedSenderHost = (cmdInfo.host == "@") ? "" : cmdInfo.host;
         TimUdpServer* server = new TimUdpServer(allowedSenderHost);
         success = server->initSocket(cmdInfo.port);
 
