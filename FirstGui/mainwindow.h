@@ -7,6 +7,7 @@
 #include <QListWidget>
 #include <QTcpSocket>
 #include <QUdpSocket>
+#include <QVector>
 
 namespace Ui {
     class MainWindow;
@@ -58,15 +59,9 @@ private:
 
     QTcpSocket *socketTcp;
     QUdpSocket *socketUdp;
-    //QAbstractSocket *socket;
     QUdpSocket *udpOutSocket;
 
-
-    /*
-    QPushButton *btn ;
-    QLineEdit *edit;*/
-    //QListWidget* lwg;
-
+    QVector<QListWidgetItem*> userIcons;
 private: // service function
     void init_server_connection();
     void appendDataToDialog(MainWindow::User user, const QString &str);

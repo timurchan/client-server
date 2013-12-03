@@ -191,13 +191,13 @@ bool startServer(const CmdInfoType& cmdInfo)
 
     bool success = false;
     if(cmdInfo.protocolType == UDP) {
-        //QSharedPointer<TimUdpServer> server = QSharedPointer<TimUdpServer>(new TimUdpServer());
         QString allowedSenderHost = cmdInfo.host == "@" ? "" : cmdInfo.host;
+        // можно не беспокоиться об освобождении памяти, оно произойдет при завершении программы
         TimUdpServer* server = new TimUdpServer(logFile, allowedSenderHost);
         success = server->initSocket(cmdInfo.port);
 
     } else if(cmdInfo.protocolType == TCP) {
-        //QSharedPointer<TimTcpServer> server = QSharedPointer<TimTcpServer>(new TimTcpServer());
+        // можно не беспокоиться об освобождении памяти, оно произойдет при завершении программы
         TimTcpServer* server = new TimTcpServer(logFile);
         if(cmdInfo.host == "@") {
             success = server->listen(QHostAddress::Any, cmdInfo.port);

@@ -14,6 +14,12 @@ TimUdpServer::TimUdpServer(QFile& file, const QString& senderHost, QObject *pare
     stream.setDevice(&file);
 }
 
+TimUdpServer::~TimUdpServer()
+{
+    delete udpSocket;
+    delete udpOutSocket;
+}
+
 void TimUdpServer::log(const QString str)
 {
     QTextStream(stdout) << str << "\n";
@@ -37,7 +43,7 @@ bool TimUdpServer::initSocket(int port)
 
 void TimUdpServer::readPendingDatagrams()
 {
-    QTextStream(stdout) << "Datagram reveiced.\n";
+    //QTextStream(stdout) << "Datagram reveiced.\n";
     while (udpSocket->hasPendingDatagrams()) {
         QByteArray datagram;
         datagram.resize(udpSocket->pendingDatagramSize());
@@ -60,6 +66,9 @@ void TimUdpServer::readPendingDatagrams()
                 int port = parser.getId(); // не тот, с которого шлет клиент, а тот, который он слушает
                 clients.insert(Address(senderHostStr, port));
                 sendUserList();
+
+                QString who = senderHostStr + ":" + QString::number(port);
+                log("New client from:" + who);
             }
             if(commands.find(XMLCommandsParser::CT_MESSAGE) != commands.end()) {
                 QString in_msg = parser.getMessage();

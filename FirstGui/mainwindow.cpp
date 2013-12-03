@@ -168,11 +168,15 @@ void MainWindow::on_messageLineEdit_returnPressed()
 
 void MainWindow::showUsers(const QStringList &users)
 {
+    for(int i = 0; i < userIcons.size(); i++)
+    {
+        delete userIcons[i];
+    }
     ui->clientsWidget->clear();
     ui->clientsWidget->setIconSize(QSize(24, 24));
     foreach(QString user, users)
     {
-        new QListWidgetItem(QPixmap("user.png"), user, ui->clientsWidget);
+        userIcons.push_back(new QListWidgetItem(QPixmap("user.png"), user, ui->clientsWidget));
     }
 }
 
@@ -264,6 +268,7 @@ void MainWindow::sendUdp(const QString &str_)
     out << qint16(0);
     out << str;
     out.device()->seek(qint16(0));
+    int sz = data.size();
     out << qint16(data.size() - sizeof(qint16));
     udpOutSocket->writeDatagram(data, QHostAddress(m_host), quint16(m_port));
 }

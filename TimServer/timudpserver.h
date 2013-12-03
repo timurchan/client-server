@@ -30,7 +30,7 @@ class TimUdpServer : public QObject
 public:
     explicit TimUdpServer(QFile& file, const QString& senderHost = "",
                           QObject *parent = 0);
-
+    ~TimUdpServer();
     bool initSocket(int port);
 
 private:
