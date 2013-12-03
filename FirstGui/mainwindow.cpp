@@ -29,7 +29,6 @@ MainWindow::MainWindow(QWidget *parent) :
     init_server_connection();
 
     connect(tuneUpUi->applyPushButton, SIGNAL(clicked()), this, SLOT(onClickApplyTuneButton()));
-
 }
 
 MainWindow::~MainWindow()
@@ -68,19 +67,18 @@ void MainWindow::on_actionServerConnect_triggered()
     }
     else // TCP
     {
-        if(! socketTcp) {
-            socketTcp = new QTcpSocket(this);
-            connect(socketTcp, SIGNAL(readyRead()), this, SLOT(readyReadTcp()));
-            connect(socketTcp, SIGNAL(connected()), this, SLOT(connectedTcp()));
-            socketTcp->connectToHost(m_host, m_port);
+        delete socketTcp;
+        ui->clientsWidget->clear();
+        ui->dialogW->clear();
 
-            ui->statusBar->showMessage(QString("Connect to server ip: ") + m_host +
-                                       QString(", port: ") + QString::number((int)m_port));
-        } else {
-            ui->statusBar->showMessage(QString("Connected to server ip: ") + m_host +
-                                       QString(", port: ") + QString::number((int)m_port) +
-                                       QString("is already done"));
-        }
+        socketTcp = new QTcpSocket(this);
+        connect(socketTcp, SIGNAL(readyRead()), this, SLOT(readyReadTcp()));
+        connect(socketTcp, SIGNAL(connected()), this, SLOT(connectedTcp()));
+        socketTcp->connectToHost(m_host, m_port);
+
+        ui->statusBar->showMessage(QString("New connect to server ip: ") + m_host +
+                                   QString(", port: ") + QString::number((int)m_port));
+
     }
 }
 
