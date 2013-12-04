@@ -34,7 +34,7 @@ void TimTcpServer::incomingConnection(int socketfd)
             QString::number(client->peerPort());
     clients[client] = user;
 
-    log("New client from:" + client->peerAddress().toString()
+    log("New client from: " + client->peerAddress().toString()
                            + QString::number(client->peerPort()));
 
     connect(client, SIGNAL(readyRead()), this, SLOT(readyRead()));
@@ -82,7 +82,7 @@ void TimTcpServer::readyRead()
 void TimTcpServer::disconnected()
 {
     QTcpSocket *client = (QTcpSocket*)sender();
-    log("Client disconnected:" + client->peerAddress().toString()
+    log("Client disconnected: " + client->peerAddress().toString()
                                + QString::number(client->peerPort()));
     clients.remove(client);
     sendUserList();

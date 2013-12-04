@@ -23,7 +23,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     enableTuneUpWidgets(true);
-    ui->actionDisconnect->setEnabled(false);
     enableChatWidgets(false);
 
     ui->dialogW->setReadOnly(true);
@@ -53,8 +52,8 @@ void MainWindow::getNewSettings()
     if (m_protocol_type == MainWindow::UDP)
     {
         bool ok = false;
-        const int portClientSoFar = ui->srvPortLE->text().toInt(&ok);
-        m_clientPort = (ok && portClientSoFar > 0) ? portClientSoFar : MainWindow::DEFAULT_PORT_CLIENT;
+        const int portClient = ui->clPortLE->text().toInt(&ok);
+        m_clientPort = (ok && portClient > 0) ? portClient : MainWindow::DEFAULT_PORT_CLIENT;
     }
 }
 
@@ -73,7 +72,6 @@ void MainWindow::on_actionServerConnect_triggered()
             enableChatWidgets(true);
             enableTuneUpWidgets(false);
             ui->actionServerConnect->setEnabled(false);
-            ui->actionDisconnect->setEnabled(true);
         }
         if(m_isBindUdpInSocket)
         {
@@ -87,7 +85,6 @@ void MainWindow::on_actionServerConnect_triggered()
             enableChatWidgets(true);
             enableTuneUpWidgets(false);
             ui->actionServerConnect->setEnabled(false);
-            ui->actionDisconnect->setEnabled(true);
         }
         else
         {
@@ -95,15 +92,16 @@ void MainWindow::on_actionServerConnect_triggered()
             enableChatWidgets(false);
             enableTuneUpWidgets(true);
             ui->actionServerConnect->setEnabled(true);
-            ui->actionDisconnect->setEnabled(false);
         }
 
     }
     else // TCP
     {
+        clearUserIcons();
         delete socketTcp;
         ui->clientsWidget->clear();
         ui->dialogW->clear();
+
 
         socketTcp = new QTcpSocket(this);
         connect(socketTcp, SIGNAL(readyRead()), this, SLOT(readyReadTcp()));
@@ -130,7 +128,7 @@ void MainWindow::init_server_connection()
     ui->srvHostLE->setText(m_host);
     ui->srvPortLE->setText(QString::number(m_portHost));
     ui->clCB->setCurrentIndex(m_protocol_type);
-    if (m_clientPort == UDP)
+    if (m_protocol_type == UDP)
     {
         ui->clPortL->setEnabled(true);
         ui->clPortLE->setEnabled(true);
@@ -194,13 +192,18 @@ void MainWindow::on_messageLineEdit_returnPressed()
     ui->messageLineEdit->clear();
 }
 
-void MainWindow::showUsers(const QStringList &users)
+void MainWindow::clearUserIcons()
 {
     for(int i = 0; i < userIcons.size(); i++)
     {
         delete userIcons[i];
     }
     userIcons.clear();
+}
+
+void MainWindow::showUsers(const QStringList &users)
+{
+    clearUserIcons();
     ui->clientsWidget->clear();
     ui->clientsWidget->setIconSize(QSize(24, 24));
     foreach(QString user, users)
@@ -346,5 +349,14 @@ void MainWindow::on_actionDisconnect_triggered()
     enableChatWidgets(false);
 
     ui->actionServerConnect->setEnabled(true);
-    ui->actionDisconnect->setEnabled(false);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    //Здесь код
+    bool q = 1;
+
+    XMLCommandsParser parser(XMLCommandsParser::CT_INIT, -m_clientPort);
+    sendUdp(parser.toString());
+    //event->accept();
 }

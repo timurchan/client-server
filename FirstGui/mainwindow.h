@@ -39,15 +39,16 @@ private slots:
     void on_actionServerConnect_triggered();
     void on_actionExit_triggered();
     void on_messageLineEdit_returnPressed();
+    void on_clCB_currentIndexChanged(int index);
+    void on_actionDisconnect_triggered();
 
     void readyReadTcp();
     void readyReadUdp();
     void connectedTcp();
     void connectedUdp();
 
-    void on_clCB_currentIndexChanged(int index);
-
-    void on_actionDisconnect_triggered();
+protected slots:
+    virtual void closeEvent(QCloseEvent *e);
 
 private:
     Ui::MainWindow *ui;
@@ -72,6 +73,7 @@ private: // service function
 
     void enableChatWidgets(bool show);
     void enableTuneUpWidgets(bool show);
+    void clearUserIcons();
 
 private: // constants
     static const int DEFAULT_PORT;

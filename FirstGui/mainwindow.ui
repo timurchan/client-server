@@ -291,7 +291,6 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionServerConnect"/>
-   <addaction name="actionDisconnect"/>
    <addaction name="separator"/>
    <addaction name="actionExit"/>
   </widget>
@@ -305,18 +304,6 @@
    </property>
    <property name="toolTip">
     <string>connect</string>
-   </property>
-  </action>
-  <action name="actionDisconnect">
-   <property name="icon">
-    <iconset resource="client.qrc">
-     <normaloff>:/new/prefix1/icons/disconnect_small.png</normaloff>:/new/prefix1/icons/disconnect_small.png</iconset>
-   </property>
-   <property name="text">
-    <string>Disconnect</string>
-   </property>
-   <property name="toolTip">
-    <string>client tune</string>
    </property>
   </action>
   <action name="actionExit">

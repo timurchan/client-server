@@ -23,7 +23,7 @@ TimUdpServer::~TimUdpServer()
 void TimUdpServer::log(const QString str)
 {
     QTextStream(stdout) << str << "\n";
-    stream << str << "\n\n";
+    stream << str << "\n";
     stream.flush();
 }
 
@@ -64,11 +64,19 @@ void TimUdpServer::readPendingDatagrams()
             XMLCommandsParser::CommandsContainer commands = parser.getCommands();
             if(commands.find(XMLCommandsParser::CT_INIT) != commands.end()) {
                 int port = parser.getId(); // не тот, с которого шлет клиент, а тот, который он слушает
-                clients.insert(Address(senderHostStr, port));
-                sendUserList();
 
-                QString who = senderHostStr + ":" + QString::number(port);
-                log("New client from:" + who);
+                if(port > 0) {
+                    clients.insert(Address(senderHostStr, port));
+                    sendUserList();
+                    QString who = senderHostStr + ":" + QString::number(port);
+                    log("New client from: " + who);
+                } else {
+                    port *= -1;
+                    clients.remove(Address(senderHostStr, port));
+                    sendUserList();
+                    QString who = senderHostStr + ":" + QString::number(port);
+                    log("Client disconnected: " + who);
+                }
             }
             if(commands.find(XMLCommandsParser::CT_MESSAGE) != commands.end()) {
                 QString in_msg = parser.getMessage();
