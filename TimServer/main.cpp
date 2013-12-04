@@ -184,7 +184,7 @@ bool startServer(const CmdInfoType& cmdInfo)
         logName = "TimServer.log";  // default value;
     }
     static QFile logFile(logName);
-    if ( !logFile.open(QIODevice::ReadWrite) ) {
+    if ( !logFile.open(QIODevice::WriteOnly) ) {
         QTextStream(stdout) << "Can`t open log file\n";
         return false;
     }

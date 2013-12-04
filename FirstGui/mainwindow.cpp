@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "ui_tuneUpPanel.h"
 #include "xmlcommandsparser.h"
 
 const QString MainWindow::DEFAULT_HOST = QString("127.0.0.1");

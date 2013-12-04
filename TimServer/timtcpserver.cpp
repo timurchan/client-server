@@ -82,9 +82,9 @@ void TimTcpServer::readyRead()
 void TimTcpServer::disconnected()
 {
     QTcpSocket *client = (QTcpSocket*)sender();
-    log("Client disconnected:" + client->peerAddress().toString());
+    log("Client disconnected:" + client->peerAddress().toString()
+                               + QString::number(client->peerPort()));
     clients.remove(client);
-    delete client;
     sendUserList();
 }
 
