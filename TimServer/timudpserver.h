@@ -9,7 +9,11 @@
 #include <QSet>
 
 struct Address {
-    Address() {}
+    Address() :
+        host(""),
+        port(0)
+    {}
+
     Address(const QString& host_, int port_) :
         host(host_),
         port(port_)
@@ -37,7 +41,7 @@ private:
 
     void sendUserList();
     void sendMessage(const QString& message,
-                     const Address& exceptAddress);
+                     Address exceptAddress = Address());
     void sendUdp(const Address& addr,
                  const QString &str);
     void log(const QString str);

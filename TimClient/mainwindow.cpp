@@ -353,10 +353,8 @@ void MainWindow::on_actionDisconnect_triggered()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    //Здесь код
-    bool q = 1;
-
-    XMLCommandsParser parser(XMLCommandsParser::CT_INIT, -m_clientPort);
-    sendUdp(parser.toString());
-    //event->accept();
+    if(m_protocol_type == UDP) {
+      XMLCommandsParser parser(XMLCommandsParser::CT_INIT, -m_clientPort);
+      sendUdp(parser.toString());
+    }
 }

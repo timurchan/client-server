@@ -51,7 +51,7 @@ void TimTcpServer::readyRead()
         XMLCommandsParser parser(str);
         XMLCommandsParser::CommandsContainer commands = parser.getCommands();
         if(commands.find(XMLCommandsParser::CT_INIT) != commands.end()) {
-            QString msg = QString("Server:" + clients[client] + " has joined.\n");
+            QString msg = QString("New client from: " + clients[client]);
             XMLCommandsParser parser1(XMLCommandsParser::CT_MESSAGE, msg);
             QString str = prepareDataToSend(parser1.toString());
 
@@ -82,9 +82,19 @@ void TimTcpServer::readyRead()
 void TimTcpServer::disconnected()
 {
     QTcpSocket *client = (QTcpSocket*)sender();
-    log("Client disconnected: " + client->peerAddress().toString()
-                               + QString::number(client->peerPort()));
+    QString disconnect_msg = "Client disconnected: " + client->peerAddress().toString()
+                              + QString::number(client->peerPort());
+    log(disconnect_msg);
     clients.remove(client);
+
+    XMLCommandsParser parser1(XMLCommandsParser::CT_MESSAGE, disconnect_msg);
+    QString str = prepareDataToSend(parser1.toString());
+
+    for(ClientInfoContainer::iterator it = clients.begin(); it != clients.end(); ++it)
+    {
+        it.key()->write(str.toUtf8());
+    }
+
     sendUserList();
 }
 

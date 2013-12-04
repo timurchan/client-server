@@ -69,13 +69,17 @@ void TimUdpServer::readPendingDatagrams()
                     clients.insert(Address(senderHostStr, port));
                     sendUserList();
                     QString who = senderHostStr + ":" + QString::number(port);
-                    log("New client from: " + who);
+                    QString new_client_msg = "New client from: " + who;
+                    log(new_client_msg);
+                    sendMessage(new_client_msg);
                 } else {
                     port *= -1;
                     clients.remove(Address(senderHostStr, port));
                     sendUserList();
                     QString who = senderHostStr + ":" + QString::number(port);
-                    log("Client disconnected: " + who);
+                    QString disconnect_msg = "Client disconnected: " + who;
+                    log(disconnect_msg);
+                    sendMessage(disconnect_msg);
                 }
             }
             if(commands.find(XMLCommandsParser::CT_MESSAGE) != commands.end()) {
@@ -117,7 +121,7 @@ void TimUdpServer::sendUserList()
 }
 
 void TimUdpServer::sendMessage(const QString &message,
-                               const Address& exceptAddress)
+                               Address exceptAddress)
 {
     foreach (const Address& client, clients) {
         if(! (client == exceptAddress)) {
