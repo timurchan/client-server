@@ -23,7 +23,5 @@ HEADERS  += mainwindow.h \
     xmlcommandsparser.h
 
 FORMS    += mainwindow.ui
-FORMS    += tuneUpPanel.ui
 
-RESOURCES += \
-    client.qrc
+RESOURCES += client.qrc
