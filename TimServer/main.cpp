@@ -9,7 +9,7 @@
 #include "timtcpserver.h"
 #include "timudpserver.h"
 
-const char * VERSION = "0.022";
+const char * VERSION = "0.03";
 
 enum ProtocolType {
    UDP,

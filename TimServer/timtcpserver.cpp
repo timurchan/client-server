@@ -34,7 +34,8 @@ void TimTcpServer::incomingConnection(int socketfd)
             QString::number(client->peerPort());
     clients[client] = user;
 
-    log("New client from:" + client->peerAddress().toString());
+    log("New client from:" + client->peerAddress().toString()
+                           + QString::number(client->peerPort()));
 
     connect(client, SIGNAL(readyRead()), this, SLOT(readyRead()));
     connect(client, SIGNAL(disconnected()), this, SLOT(disconnected()));

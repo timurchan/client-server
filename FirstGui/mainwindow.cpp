@@ -172,6 +172,7 @@ void MainWindow::showUsers(const QStringList &users)
     {
         delete userIcons[i];
     }
+    userIcons.clear();
     ui->clientsWidget->clear();
     ui->clientsWidget->setIconSize(QSize(24, 24));
     foreach(QString user, users)
